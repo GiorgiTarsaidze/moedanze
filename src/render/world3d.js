@@ -9,7 +9,7 @@ const MARK_Y = 0.008;
 // Geometry with its transform baked in, as a non-indexed copy; optional UV scale replaces texture.repeat
 // so pieces that only differed by repeat can share one material.
 function baked(mesh, uvScale) {
-  mesh.updateMatrixWorld(true);
+  mesh.updateWorldMatrix(true, false);                     // include the parents' transforms (sign groups)
   const g = (mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()).applyMatrix4(mesh.matrixWorld);
   if (uvScale && g.attributes.uv) { const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * uvScale.x, uv.getY(i) * uvScale.y); }
   return g;

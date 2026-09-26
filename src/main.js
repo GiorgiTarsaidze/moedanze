@@ -86,6 +86,7 @@ $('#start').addEventListener('click', startDrive);
 function startDrive() {
   sim.setMode(app.mode);
   app.menu = false; app.running = true; app.paused = false; app.resultShown = false; app.demo = false;
+  sim.paused = false;                // "restart exam" from the pause menu used to leave the physics paused
   app.debug = false; app.ext = false;
   head.yaw = 0; head.pitch = -0.12;
   $('#menu').classList.add('hidden'); $('#result').classList.add('hidden'); $('#pause').classList.add('hidden');
