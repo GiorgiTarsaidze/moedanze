@@ -5,6 +5,34 @@ import { asphaltTexture, grassTexture, concreteTexture, fenceTexture, postTextur
 
 const MARK_Y = 0.008;
 
+// ---- static merging: fewer draw calls (every object is drawn up to 5x per frame: view, 3 mirrors, shadows)
+// Geometry with its transform baked in, as a non-indexed copy; optional UV scale replaces texture.repeat
+// so pieces that only differed by repeat can share one material.
+function baked(mesh, uvScale) {
+  mesh.updateMatrixWorld(true);
+  const g = (mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()).applyMatrix4(mesh.matrixWorld);
+  if (uvScale && g.attributes.uv) { const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * uvScale.x, uv.getY(i) * uvScale.y); }
+  return g;
+}
+// Vertices of one material group of a non-indexed geometry
+function groupSlice(g, grp) {
+  const out = new THREE.BufferGeometry();
+  for (const [n, a] of Object.entries(g.attributes)) out.setAttribute(n, new THREE.BufferAttribute(a.array.slice(grp.start * a.itemSize, (grp.start + grp.count) * a.itemSize), a.itemSize));
+  return out;
+}
+function mergeGeos(list) {
+  const out = new THREE.BufferGeometry();
+  for (const n of Object.keys(list[0].attributes).filter((k) => list.every((g) => g.attributes[k]))) {
+    const size = list[0].attributes[n].itemSize, arr = new Float32Array(list.reduce((s, g) => s + g.attributes[n].array.length, 0));
+    let o = 0; for (const g of list) { arr.set(g.attributes[n].array, o); o += g.attributes[n].array.length; }
+    out.setAttribute(n, new THREE.BufferAttribute(arr, size));
+  }
+  return out;
+}
+function mergedMesh(geos, material, { cast = false, receive = false } = {}) {
+  const m = new THREE.Mesh(mergeGeos(geos), material); m.castShadow = cast; m.receiveShadow = receive; return m;
+}
+
 export function buildWorld3D(scene, world, opts = {}) {
   const course = world.course;
   const root = new THREE.Group();
@@ -40,12 +68,13 @@ export function buildWorld3D(scene, world, opts = {}) {
   const asphaltTex = asphaltTexture(); asphaltTex.repeat.set(W / 7, H / 7);
   const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshStandardMaterial({ map: asphaltTex, roughness: 0.95, metalness: 0 }));
   asphalt.rotation.x = -Math.PI / 2; asphalt.position.set(cx, 0, cz); asphalt.receiveShadow = true; root.add(asphalt);
-  // street outside the fence
+  // street outside the fence (one mesh; texture repeat baked into the UVs)
+  const streets = [];
   for (const [x, z, w, h] of [[B.x0 - 9, cz, 12, H + 40], [B.x1 + 9, cz, 12, H + 40], [cx, B.z0 - 9, W + 40, 12], [cx, B.z1 + 9, W + 40, 12]]) {
-    const t = asphaltTexture(); t.repeat.set(w / 7, h / 7);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: 1, color: 0xcfcfcf }));
-    m.rotation.x = -Math.PI / 2; m.position.set(x, -0.01, z); m.receiveShadow = true; root.add(m);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, -0.01, z); streets.push(baked(m, { x: w / 7, y: h / 7 }));
   }
+  root.add(mergedMesh(streets, new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 1, color: 0xcfcfcf }), { receive: true }));
 
   // ------------------------------------------------------------------ lawns with kerbs
   const grass = grassTexture(); grass.repeat.set(0.25, 0.25);
@@ -53,13 +82,14 @@ export function buildWorld3D(scene, world, opts = {}) {
   const lawnMat = new THREE.MeshStandardMaterial({ map: grass, roughness: 1 });
   const kerbMat = new THREE.MeshStandardMaterial({ map: concrete, roughness: 0.9, color: 0xdedcd4 });
   const kh = world.dims.KERB_HEIGHT;
+  const lawnParts = [[], []];                                 // [tops, kerb sides] of all lawns
   for (const poly of course.lawns) {
     const shape = new THREE.Shape(poly.map((p) => new THREE.Vector2(p.x, -p.z)));
     const g = new THREE.ExtrudeGeometry(shape, { depth: kh, bevelEnabled: false });
     g.rotateX(-Math.PI / 2);
-    const m = new THREE.Mesh(g, [lawnMat, kerbMat]);
-    m.receiveShadow = true; root.add(m);
+    for (const grp of g.groups) lawnParts[grp.materialIndex].push(groupSlice(g, grp));
   }
+  root.add(mergedMesh(lawnParts[0], lawnMat, { receive: true }), mergedMesh(lawnParts[1], kerbMat, { receive: true }));
 
   // ------------------------------------------------------------------ stadium
   const st = course.stadium;
@@ -82,14 +112,15 @@ export function buildWorld3D(scene, world, opts = {}) {
   buildFence(root, st.fence, st.fenceHeight, true);
   buildFence(root, course.boundary, 2.2, true);
 
-  // gates (barriers)
-  for (const gt of course.gates) {
+  // gates (barriers), one mesh
+  const arms = course.gates.map((gt) => {
     const len = Math.hypot(gt.b.x - gt.a.x, gt.b.z - gt.a.z);
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(len, 0.1, 0.1), new THREE.MeshLambertMaterial({ map: stripeTexture() }));
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(len, 0.1, 0.1));
     arm.position.set((gt.a.x + gt.b.x) / 2, 1.0, (gt.a.z + gt.b.z) / 2);
     arm.rotation.y = -Math.atan2(gt.b.z - gt.a.z, gt.b.x - gt.a.x);
-    arm.castShadow = true; root.add(arm);
-  }
+    return baked(arm);                                      // stripeTexture() carries repeat.x = 2 itself
+  });
+  if (arms.length) root.add(mergedMesh(arms, new THREE.MeshLambertMaterial({ map: stripeTexture() }), { cast: true }));
 
   // ------------------------------------------------------------------ ramp (hill)
   for (const r of world.ramps) root.add(buildRamp(r, concrete));
@@ -111,17 +142,20 @@ export function buildWorld3D(scene, world, opts = {}) {
   }
 
   // ------------------------------------------------------------------ signs
+  const signPoles = [];
   for (const s of course.signs) {
     const g = new THREE.Group();
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 8), new THREE.MeshStandardMaterial({ color: 0x9aa0a4, metalness: 0.5, roughness: 0.4 }));
-    pole.position.y = 1.15; pole.castShadow = true; g.add(pole);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.3, 8));
+    pole.position.y = 1.15; g.add(pole);
     const size = s.type === 'steep' ? 0.8 : 0.72;
     const plate = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ map: signTexture(s.type, s.text, s.sub), transparent: s.type === 'steep', alphaTest: 0.1, side: THREE.DoubleSide }));
     plate.position.y = 2.1 + size / 2 - 0.3; plate.position.z = 0.05; g.add(plate);
     g.position.set(s.at.x, kh, s.at.z);
     g.rotation.y = Math.atan2(s.face.x, s.face.z);
     root.add(g);
+    signPoles.push(baked(pole)); g.remove(pole);
   }
+  if (signPoles.length) root.add(mergedMesh(signPoles, new THREE.MeshStandardMaterial({ color: 0x9aa0a4, metalness: 0.5, roughness: 0.4 }), { cast: true }));
 
   // ------------------------------------------------------------------ trees & surroundings
   const trees = course.trees;
@@ -137,11 +171,16 @@ export function buildWorld3D(scene, world, opts = {}) {
     col.setHSL(0.26 + (i % 5) * 0.012, 0.42, 0.28 + (i % 4) * 0.03); cm.setColorAt(i, col);
   });
   tm.castShadow = cm.castShadow = true; root.add(tm, cm);
+  const roofs = [];
   for (const [i, b] of course.outerBuildings.entries()) {
     const t = windowsTexture(i + 9); t.repeat.set(Math.max(1, b.w / 8), Math.max(1, b.h / 8));
-    const m = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d), [new THREE.MeshLambertMaterial({ map: t }), new THREE.MeshLambertMaterial({ map: t }), new THREE.MeshLambertMaterial({ color: 0x8a857c }), new THREE.MeshLambertMaterial({ color: 0x8a857c }), new THREE.MeshLambertMaterial({ map: t }), new THREE.MeshLambertMaterial({ map: t })]);
-    m.position.set(b.x + b.w / 2, b.h / 2, b.z + b.d / 2); root.add(m);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, b.d));
+    m.position.set(b.x + b.w / 2, b.h / 2, b.z + b.d / 2);
+    const g = baked(m);                                     // box groups: 0,1 = ±x, 2,3 = ±y (roof/bottom), 4,5 = ±z
+    root.add(mergedMesh([0, 1, 4, 5].map((k) => groupSlice(g, g.groups[k])), new THREE.MeshLambertMaterial({ map: t })));
+    roofs.push(groupSlice(g, g.groups[2]), groupSlice(g, g.groups[3]));
   }
+  if (roofs.length) root.add(mergedMesh(roofs, new THREE.MeshLambertMaterial({ color: 0x8a857c })));
 
   return { root, sun, hemi,
     updateShadow(center) { sun.position.set(center.x - 40, 80, center.z + 30); sun.target.position.set(center.x, 0, center.z); sun.target.updateMatrixWorld(); } };
@@ -154,24 +193,24 @@ function stripeTexture() {
 }
 
 function buildFence(root, poly, h, closed) {
-  const tex = fenceTexture();
-  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, alphaTest: 0.35, side: THREE.DoubleSide });
-  const postMat = new THREE.MeshLambertMaterial({ color: 0x8c9296 });
   const n = closed ? poly.length : poly.length - 1;
+  const panels = [], posts = [];
+  const postGeo = new THREE.CylinderGeometry(0.03, 0.03, h + 0.1, 6);
   for (let i = 0; i < n; i++) {
     const a = poly[i], b = poly[(i + 1) % poly.length];
     const L = Math.hypot(b.x - a.x, b.z - a.z);
-    const t = tex.clone(); t.needsUpdate = true; t.repeat.set(L / 1.2, h / 1.2);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(L, h), mat.clone()); m.material.map = t;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(L, h));
     m.position.set((a.x + b.x) / 2, h / 2, (a.z + b.z) / 2);
     m.rotation.y = -Math.atan2(b.z - a.z, b.x - a.x);
-    root.add(m);
+    panels.push(baked(m, { x: L / 1.2, y: h / 1.2 }));
     const np = Math.ceil(L / 3);
     for (let k = 0; k <= np; k++) {
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, h + 0.1, 6), postMat);
-      p.position.set(a.x + (b.x - a.x) * k / np, (h + 0.1) / 2, a.z + (b.z - a.z) * k / np); root.add(p);
+      const p = new THREE.Mesh(postGeo);
+      p.position.set(a.x + (b.x - a.x) * k / np, (h + 0.1) / 2, a.z + (b.z - a.z) * k / np); posts.push(baked(p));
     }
   }
+  root.add(mergedMesh(panels, new THREE.MeshLambertMaterial({ map: fenceTexture(), transparent: true, alphaTest: 0.35, side: THREE.DoubleSide })));
+  root.add(mergedMesh(posts, new THREE.MeshLambertMaterial({ color: 0x8c9296 })));
 }
 
 function buildRamp(r, concrete) {
