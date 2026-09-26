@@ -1,0 +1,19 @@
+{
+  "name": "rustavi-driving-exam-sim",
+  "version": "0.0.1",
+  "description": "First-person 3D simulator of the Rustavi (Georgia) B-category Stage 1 practical driving examination ground",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/serve.mjs 5173",
+    "start": "node scripts/serve.mjs 5173",
+    "test": "node tests/test-suite.mjs",
+    "test:exam": "node tests/run-exam.mjs exam",
+    "test:browser": "node tests/browser-test.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright": "^1.56.0"
+  }
+}

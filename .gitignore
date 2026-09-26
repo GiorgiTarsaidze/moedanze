@@ -1,0 +1,7 @@
+node_modules/
+tests/screenshots/
+
+# Third-party source material (emsi.ge Rustavi map) used for research — not redistributed.
+# Keep local copies in docs/ for tools/course-map.html.
+*.pdf
+docs/rustavi-map.png

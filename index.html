@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>რუსთავის მოედანი — მართვის გამოცდა</title>
+<meta name="description" content="რუსთავის პრაქტიკული მოედნის (B კატეგორია, I ეტაპი) 3D სიმულატორი, მძღოლის თვალით.">
+<link rel="stylesheet" href="./src/ui/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="hud-status" class="panel"></div>
+  <div id="guide" class="panel hidden">
+    <div class="g-title"></div>
+    <div class="g-text"></div>
+    <div class="g-hint"></div>
+    <div class="g-readout"></div>
+    <div class="g-sticker hidden"></div>
+  </div>
+  <div id="toasts"></div>
+  <canvas id="minimap" width="220" height="330" class="hidden"></canvas>
+  <div id="telemetry" class="panel"></div>
+  <div id="keys" class="panel"></div>
+  <div id="crosshair"></div>
+  <div id="lockhint" class="hidden">დააწკაპუნეთ ეკრანზე, რომ მაუსით მიმოიხედოთ</div>
+</div>
+
+<div id="debug" class="panel hidden"></div>
+
+<div id="menu" class="overlay">
+  <div class="card wide">
+    <div class="brand">
+      <div>
+        <h1>რუსთავის მოედანი</h1>
+        <div class="sub">მართვის პრაქტიკული გამოცდა · B კატეგორია · I ეტაპი (მოედანი)</div>
+      </div>
+      <button id="start" class="primary">დაწყება</button>
+    </div>
+    <div class="modes">
+      <button class="mode" data-mode="training">
+        <b>ვარჯიში</b>
+        <span>მითითებები, ორიენტირები, ტრაექტორიები და ინსტრუქტორის ჩვენება. შეცდომის შემდეგაც გრძელდება.</span>
+      </button>
+      <button class="mode" data-mode="exam">
+        <b>გამოცდა</b>
+        <span>დახმარების გარეშე, რუსთავის თანმიმდევრობით. 100 ქულა; ჩაჭრა — 40 საჯარიმო ქულა ან დისკვალიფიკაცია.</span>
+      </button>
+    </div>
+    <div class="menu-grid">
+      <section>
+        <h3>მართვა</h3>
+        <dl class="keys2">
+          <dt><kbd>W</kbd> <kbd>S</kbd></dt><dd>გაზი · მუხრუჭი (ან <kbd>↑</kbd> <kbd>↓</kbd>)</dd>
+          <dt><kbd>A</kbd> <kbd>D</kbd></dt><dd>საჭე (ან <kbd>←</kbd> <kbd>→</kbd>)</dd>
+          <dt><kbd>F</kbd> <kbd>R</kbd> <kbd>N</kbd> <kbd>P</kbd></dt><dd>გადაცემა: წინ · უკუსვლა · ნეიტრალი · პარკინგი</dd>
+          <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>მარცხენა · მარჯვენა მოხვევის მაჩვენებელი</dd>
+          <dt><kbd>Space</kbd></dt><dd>სადგომი მუხრუჭი</dd>
+          <dt>მაუსი</dt><dd>მიმოხედვა · მარჯვენა ღილაკი — მიახლოება</dd>
+          <dt><kbd>C</kbd></dt><dd>პირდაპირ ყურება</dd>
+          <dt><kbd>Esc</kbd></dt><dd>პაუზა · საკონტროლო წერტილები</dd>
+          <dt><kbd>Backspace</kbd></dt><dd>ელემენტის თავიდან დაწყება</dd>
+        </dl>
+        <p class="small">ვარჯიშისას: <kbd>G</kbd> ინსტრუქტორი · <kbd>M</kbd> მინირუკა · <kbd>V</kbd> ხედი გარედან · <kbd>F3</kbd> ტექნიკური ხედი</p>
+      </section>
+      <section>
+        <h3>პარამეტრები</h3>
+        <label class="opt"><input type="checkbox" id="opt-selfcenter" checked> საჭე სვლისას თავისით სწორდება</label>
+        <label class="opt"><input type="checkbox" id="opt-audio" checked> ხმა</label>
+        <label class="opt"><input type="checkbox" id="opt-shadows" checked> ჩრდილები</label>
+        <label class="opt">სარკეების ხარისხი
+          <select id="opt-mirror"><option value="0.5">დაბალი</option><option value="1" selected>საშუალო</option><option value="1.6">მაღალი</option></select>
+        </label>
+        <label class="opt">მაუსის მგრძნობელობა <input type="range" id="opt-sens" min="0.4" max="2.5" step="0.1" value="1"></label>
+      </section>
+      <section>
+        <h3>მარშრუტი</h3>
+        <ol class="route">
+          <li>პარალელური პარკირება</li>
+          <li>უკუსვლით პარკირება (გარაჟი)</li>
+          <li>ზიგზაგი</li>
+          <li>ჩიხი (შეზღუდული სიგანის შემობრუნება)</li>
+          <li>რვიანი</li>
+          <li>აღმართი (16 %)</li>
+        </ol>
+        <p class="small">სტარტი მარცხენა გზაზე: P, ჩართული სადგომი მუხრუჭი. დაძვრამდე ჩართეთ მარცხენა მოხვევის მაჩვენებელი.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="card">
+    <h2>პაუზა</h2>
+    <button data-act="resume" class="primary">გაგრძელება</button>
+    <button data-act="restart-ex">ელემენტის თავიდან დაწყება</button>
+    <button data-act="restart-exam">გამოცდის თავიდან დაწყება</button>
+    <button data-act="debug" class="train-only">ტექნიკური ხედი (ჩართვა / გამორთვა)</button>
+    <button data-act="menu">მთავარი მენიუ</button>
+    <h3>საკონტროლო წერტილები</h3>
+    <div class="cp-list"></div>
+  </div>
+</div>
+
+<div id="result" class="overlay hidden">
+  <div class="card wide">
+    <div class="res-head"></div>
+    <div class="res-body"></div>
+    <h3>საკონტროლო წერტილები</h3>
+    <div class="cp-list"></div>
+    <div class="res-actions">
+      <button data-act="restart-exam" class="primary">თავიდან გავლა</button>
+      <button data-act="menu">მთავარი მენიუ</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

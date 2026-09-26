@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Course map</title>
+<style>body{margin:0;background:#fff;font:13px sans-serif} canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+// Draws the compiled course (the exact geometry used by the simulator) with labels,
+// next to the original PDF map, for checking the interpretation.
+import { World } from '../src/sim/world.js';
+import { rustaviCourse as course } from '../src/courses/rustavi/course.js';
+import { buildFigure8Path } from '../src/sim/exercises/figure8.js';
+const w = new World(course);
+const S = 1 / course.metersPerPx;           // draw in map px (100 dpi)
+const c = document.getElementById('c'); const g = c.getContext('2d');
+const img = new Image(); img.src = '../docs/rustavi-map.png';
+await img.decode();
+const ox = 20, oy = 70, W = 560, gapX = 60;
+c.width = ox + W * 2 + gapX + 20; c.height = oy + 1260;
+g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+g.fillStyle = '#111'; g.font = 'bold 20px sans-serif';
+g.fillText('Source: emsi.ge rustavi.pdf (100 dpi)', ox, 40);
+g.fillText('Simulator geometry (same data as physics & scoring)', ox + W + gapX, 40);
+g.drawImage(img, 0, 0, 560, 1170, ox, oy + 45, 560, 1170);
+const X = (p) => ox + W + gapX + p.x * S, Y = (p) => oy + 45 + p.z * S;
+g.save();
+g.fillStyle = '#6f7375'; g.fillRect(X({ x: w.bounds.x0 }), Y({ z: w.bounds.z0 }), (w.bounds.x1 - w.bounds.x0) * S, (w.bounds.z1 - w.bounds.z0) * S);
+const poly = (pts, fill, stroke) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.stroke(); } };
+for (const l of course.lawns) poly(l, '#2f8f47');
+poly(course.stadium.fence, '#3f6b3c', '#fff');
+for (const r of w.ramps) { const f = r.frame; poly([[r.a0, -r.hw], [r.a1, -r.hw], [r.a1, r.hw], [r.a0, r.hw]].map(([a, b]) => ({ x: f.o.x + f.f.x * a + f.r.x * b, z: f.o.z + f.f.z * a + f.r.z * b })), '#c9b98f'); }
+g.strokeStyle = '#fff'; g.lineWidth = 1.2;
+for (const m of w.markings) {
+  if (m.type === 'line') { g.setLineDash(m.dash ? [m.dash * S, m.gap * S] : []); g.beginPath(); m.pts.forEach((p, i) => i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p))); g.stroke(); }
+  else if (m.type === 'arc') { g.setLineDash([]); g.beginPath(); g.arc(X(m.c), Y(m.c), m.r * S, m.a0, m.a1); g.stroke(); }
+}
+g.setLineDash([]);
+g.fillStyle = '#ff5a2a'; for (const p of w.posts) { g.beginPath(); g.arc(X(p.p), Y(p.p), 2, 0, 7); g.fill(); }
+// route
+g.strokeStyle = 'rgba(0,170,255,0.85)'; g.lineWidth = 2; g.setLineDash([6, 4]);
+for (const leg of Object.values(w.routeLegs)) { g.beginPath(); leg.forEach((p, i) => i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p))); g.stroke(); }
+const f8 = buildFigure8Path(w.elements.figure8.stations[0], 5.25); g.beginPath(); f8.forEach((p, i) => i ? g.lineTo(X(p), Y(p)) : g.moveTo(X(p), Y(p))); g.stroke();
+g.setLineDash([]);
+// labels
+const label = (p, t, dx = 0, dy = 0) => { g.font = 'bold 14px sans-serif'; const tw = g.measureText(t).width; g.fillStyle = 'rgba(255,255,255,0.92)'; g.fillRect(X(p) + dx - 4, Y(p) + dy - 14, tw + 8, 19); g.fillStyle = '#111'; g.fillText(t, X(p) + dx, Y(p) + dy); };
+const e = w.elements;
+e.parallel.stations.forEach((s) => label(s.frame.o, `1 Parallel #${s.id}`, 60, -45));
+e.garage.stations.forEach((s) => label(s.frame.o, `4 Garage #${s.id}`, s.frame.f.x ? -30 : -95, s.frame.f.x ? 70 : 5));
+e.zigzag.stations.forEach((s, i) => label(s.frame.o, `2 Zigzag #${s.id}`, i ? 5 : -95, 22));
+e.turn.stations.forEach((s, i) => label(s.frame.o, `3 Dead end #${s.id}`, i ? -10 : -110, 30));
+label(e.figure8.stations[0].C1, '5 Figure eight', -140, -60);
+label(e.hill.stations[0].frame.o, '6 Hill 16% (stop line)', -60, 40);
+label(course.route.start.p, 'START / FINISH', 8, 0);
+g.font = '12px sans-serif'; g.fillStyle = '#111';
+g.fillText(`Scale 7.5 px = 1 m · blue dashes = route & ideal figure-eight path · orange = posts · tan = ramp`, ox + W + gapX, c.height - 12);
+g.restore();
+window.done = true;
+</script></body></html>
