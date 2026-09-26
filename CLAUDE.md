@@ -2,7 +2,7 @@
 
 First-person 3D browser simulator of the Rustavi (Georgia) B-category Stage 1 driving exam ground.
 Plain ES modules + vendored three.js (`vendor/`), no framework, no build needed to run.
-Read README.md for the course interpretation, assumptions and scoring sources.
+Course interpretation and assumptions: comments in `src/courses/rustavi/course.js`; scoring sources: `src/config/examRules.js`.
 
 ## Commands
 - `npm run dev` — static server on http://localhost:5173 (no dependencies)
