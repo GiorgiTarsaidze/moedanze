@@ -32,12 +32,11 @@ exam elements, just like on the real exam.
 | Q / E | Left / right indicator |
 | Space | Parking brake |
 | Mouse | Look around (right button: zoom in) |
-| C | Look straight ahead |
 | Esc | Pause: resume, restart, checkpoints, main menu |
 | Backspace | Restart the current element |
 | G | Instructor drives (training) |
 | M | Minimap (training) |
-| V | Outside view (training) |
+| V | Outside view |
 
 ## Scoring
 

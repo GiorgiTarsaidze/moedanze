@@ -8,7 +8,7 @@ import { examRules } from './config/examRules.js';
 import { buildWorld3D } from './render/world3d.js';
 import { buildCar, LAYER } from './render/car3d.js';
 import { Mirrors } from './render/mirrors.js';
-import { TrainingOverlay, DebugOverlay } from './render/overlays3d.js';
+import { TrainingOverlay } from './render/overlays3d.js';
 import { Input } from './input.js';
 import { CarAudio } from './audio/audio.js';
 import { UI } from './ui/ui.js';
@@ -56,13 +56,12 @@ const settings = {
 if (lowGfx) renderer.setPixelRatio(1);
 const mirrors = new Mirrors(renderer, car.group, car.mirrorGlass, VEHICLE, settings.mirror);
 const training = new TrainingOverlay(scene, sim.world, car, VEHICLE);
-const debug3d = new DebugOverlay(scene, sim.world, VEHICLE);
 const input = new Input(canvas);
 const audio = new CarAudio();
 const ui = new UI(sim);
 const demo = new AutoDriver(sim.vehicle);
 
-const app = { menu: true, running: false, paused: false, mode: store.get('mode', 'training'), demo: false, debug: false, ext: false, minimap: true, hud: true, resultShown: false };
+const app = { menu: true, running: false, paused: false, mode: store.get('mode', 'training'), demo: false, ext: false, minimap: true, hud: true, resultShown: false };
 const head = { yaw: 0, pitch: -0.12, targetYaw: null };
 
 // ------------------------------------------------------------------ menu
@@ -87,15 +86,14 @@ function startDrive() {
   sim.setMode(app.mode);
   app.menu = false; app.running = true; app.paused = false; app.resultShown = false; app.demo = false;
   sim.paused = false;                // "restart exam" from the pause menu used to leave the physics paused
-  app.debug = false; app.ext = false;
+  app.ext = false;
   head.yaw = 0; head.pitch = -0.12;
   $('#menu').classList.add('hidden'); $('#result').classList.add('hidden'); $('#pause').classList.add('hidden');
   $('#hud').classList.remove('hidden');
-  document.querySelectorAll('.train-only').forEach((e) => e.classList.toggle('hidden', app.mode !== 'training'));
   input.enabled = true;
   audio.start(); audio.resume();
   canvas.requestPointerLock?.()?.catch?.(() => {});
-  ui.toast(app.mode === 'training' ? '<b>ვარჯიში</b><br>მიჰყევით ზემოთ მოცემულ მითითებებს. ინსტრუქტორის ჩვენებისთვის დააჭირეთ G-ს.' : '<b>გამოცდა დაიწყო</b><br>როცა მზად იქნებით, ჩართეთ მარცხენა მოხვევის მაჩვენებელი და დაიძარით. წარმატებები!', 'info', 6000);
+  ui.toast(app.mode === 'training' ? '<b>ვარჯიში</b><br>მიჰყევით მითითებებს' : '<b>გამოცდა დაიწყო</b><br>ჩართეთ მარცხენა ციმციმა და დაიძარით', 'info', 6000);
 }
 // Leave the drive completely: stop the sound, end the run, clear pop-ups. Start begins a new run.
 function showMenu() {
@@ -116,9 +114,8 @@ function setPaused(p) {
 }
 function act(a) {
   if (a === 'resume') setPaused(false);
-  else if (a === 'restart-ex') { if (sim.restartExercise()) ui.toast('<b>ელემენტი თავიდან იწყება</b><br>მანქანა დგას მიმდინარე ელემენტის წინ.', 'info'); setPaused(false); }
+  else if (a === 'restart-ex') { if (sim.restartExercise()) { input.releaseHeld(); ui.toast('<b>დაბრკოლება თავიდან იწყება</b><br>მანქანა დგას მიმდინარე დაბრკოლების წინ', 'info'); } setPaused(false); }
   else if (a === 'restart-exam') { startDrive(); }
-  else if (a === 'debug') { if (app.mode === 'training') app.debug = !app.debug; setPaused(false); }
   else if (a === 'menu') showMenu();
 }
 document.querySelectorAll('#pause button, #result button').forEach((b) => b.addEventListener('click', () => act(b.dataset.act)));
@@ -127,11 +124,11 @@ document.querySelectorAll('#pause button, #result button').forEach((b) => b.addE
 function restoreCheckpoint(key) {
   const cp = sim.exam.checkpoints.get(key);
   if (!sim.restoreCheckpoint(key)) return;
-  app.resultShown = false; app.demo = false; input.enabled = true;
+  app.resultShown = false; app.demo = false; input.enabled = true; input.releaseHeld();
   $('#result').classList.add('hidden');
   head.targetYaw = 0;
   setPaused(false);
-  ui.toast(`<b>აღდგენილია: ${ui.cpLabel(cp)}</b><br>მანქანა დგას P-ზე, ჩართული სადგომი მუხრუჭით. ჩართეთ D (F) და მოხსენით სადგომი მუხრუჭი (Space).`, 'info', 8000);
+  ui.toast(`<b>აღდგენილია: ${ui.cpLabel(cp)}</b><br>მანქანა დგას P-ზე, ჩართული სადგომი მუხრუჭით. ჩართეთ D (F) და მოხსენით სადგომი მუხრუჭი (Space)`, 'info', 8000);
 }
 
 // ------------------------------------------------------------------ exam events
@@ -140,9 +137,9 @@ sim.exam.on((type, data) => {
   if (type === 'mistake') { ui.mistake(data, sim.exam.mode); audio.chime(); }
   else if (type === 'elementDone') {
     const n = sim.rules.elements[data.id].nameKa;
-    if (data.status === 'completed') { ui.toast(`<b>${n}</b><br>ელემენტი შესრულებულია.`, 'good', 3500); audio.success(); }
-    else ui.toast(`<b>${n}</b><br>ელემენტი ვერ შესრულდა.`, '', 5000);
-  } else if (type === 'allElementsDone') ui.toast('<b>ექვსივე ელემენტი შესრულებულია</b><br>დაბრუნდით სტარტზე მარცხენა გზაზე, გაჩერდით და ჩართეთ სადგომი მუხრუჭი.', 'info', 8000);
+    if (data.status === 'completed') { ui.toast(`<b>${n}</b><br>დაბრკოლება შესრულებულია`, 'good', 3500); audio.success(); }
+    else ui.toast(`<b>${n}</b><br>დაბრკოლება ვერ შესრულდა`, '', 5000);
+  } else if (type === 'allElementsDone') ui.toast('<b>ექვსივე დაბრკოლება შესრულებულია</b><br>დაბრუნდით სტარტზე მარცხენა გზაზე, გაჩერდით და ჩართეთ სადგომი მუხრუჭი.', 'info', 8000);
   else if (type === 'checkpoint' && data.kind === 'after') ui.toast(`<b>საკონტროლო წერტილი შენახულია</b><br>${ui.cpLabel(data)}. აღსადგენად დააჭირეთ Esc-ს.`, 'info', 4000);
   else if (type === 'engage' && sim.exam.mode === 'training') ui.toast(`<b>${sim.rules.elements[data.id].nameKa}</b> — ადგილი ${data.station}. დრო აითვლება (2:00).`, 'info', 3000);
   else if (type === 'finished') setTimeout(() => {
@@ -166,11 +163,9 @@ function handleAction(a) {
   if (a === 'indL') { V.setIndicator('left'); audio.click(); }
   else if (a === 'indR') { V.setIndicator('right'); audio.click(); }
   else if (a === 'parkingBrake') { V.parkingBrake = !V.parkingBrake; audio.ratchet(); }
-  else if (a === 'recenter') { head.targetYaw = 0; }
-  else if (a === 'restartExercise') { if (sim.restartExercise()) ui.toast('<b>ელემენტი თავიდან იწყება</b>', 'info'); }
+  else if (a === 'restartExercise') { if (sim.restartExercise()) { input.releaseHeld(); ui.toast('<b>დაბრკოლება თავიდან იწყება</b>', 'info'); } }
   else if (a === 'hud') { app.hud = !app.hud; }
-  else if (a === 'camera' && training) app.ext = !app.ext;
-  else if (a === 'debug' && training) app.debug = !app.debug;
+  else if (a === 'camera') app.ext = !app.ext;
   else if (a === 'minimap' && training) app.minimap = !app.minimap;
   else if (a === 'demo' && training) { app.demo = !app.demo; ui.toast(app.demo ? '<b>მართავს ინსტრუქტორი</b><br>უყურეთ საჭეს, პედლებს და სარკეებს. მართვის დასაბრუნებლად დააჭირეთ G-ს ან ნებისმიერ სამართავ ღილაკს.' : 'ინსტრუქტორი გამოირთო — მართავთ თქვენ.', 'info', 4000); }
 }
@@ -182,14 +177,14 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix(); extCam.updateProjectionMatrix(); menuCam.updateProjectionMatrix();
 });
 
-let last = performance.now(), t = 0, fps = 60, uiTimer = 0, blink = false;
+let last = performance.now(), t = 0, uiTimer = 0, blink = false;
 const eye = VEHICLE.EYE;
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt;
   if (app.menu) {   // main menu: the drive is stopped; slow aerial fly-around of the ground as a backdrop
     input.takeActions(); input.takeLook();
-    training3d(null, false); debug3d.visible = false;
+    training3d(null, false);
     const B = sim.world.bounds, cx = (B.x0 + B.x1) / 2, cz = (B.z0 + B.z1) / 2, a = t * 0.025;
     menuCam.position.set(cx + Math.cos(a) * 100, 75, cz + Math.sin(a) * 100);
     menuCam.lookAt(cx, 0, cz);
@@ -197,7 +192,6 @@ function frame(now) {
     renderer.render(scene, menuCam);
     return;
   }
-  fps = fps * 0.95 + (1 / Math.max(dt, 1e-3)) * 0.05;
   for (const a of input.takeActions()) handleAction(a);
   const V = sim.vehicle;
   const training = sim.exam.mode === 'training';
@@ -233,11 +227,8 @@ function frame(now) {
   const fov = input.zoom ? 30 : VEHICLE.CAMERA_FOV;          // hold right mouse button: lean in / zoom (mirror checks)
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 10); camera.updateProjectionMatrix(); }
 
-  debug3d.visible = app.debug && training;
-  debug3d.update(V);
-
   let cam = camera;
-  if (app.ext && training) {
+  if (app.ext) {
     const f = V.forward, back = 9, up = 5;
     extCam.position.set(V.x - f.x * back, V.y + up, V.z - f.z * back);
     extCam.lookAt(V.x + f.x * 3, V.y + 0.8, V.z + f.z * 3);
@@ -256,7 +247,6 @@ function frame(now) {
       ui.updateGuide(sim.guidance, training && app.hud);
       ui.updateTelemetry(V, blink);
       ui.drawMinimap(V, sim.guidance, training && app.minimap && app.hud);
-      ui.updateDebug(app.debug && training, sim, fps);
       $('#lockhint').classList.toggle('hidden', input.locked || app.paused || app.resultShown);
       $('#hud-status').classList.toggle('hidden', !app.hud);
       ui.updateKeys({ training, ext: app.ext, demo: app.demo, minimap: app.minimap }, app.hud);

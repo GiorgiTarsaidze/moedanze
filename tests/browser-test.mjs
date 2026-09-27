@@ -47,7 +47,7 @@ await look(-0.95, -0.2, '04-look-left-mirror');
 await look(0.85, -0.22, '05-look-right-mirror');
 await look(0.0, 0.2, '06-look-rearview');
 await look(-1.9, -0.1, '07-look-back-left');
-await page.keyboard.press('KeyC'); await wait(800);
+await page.evaluate(() => { const h = window.__sim.head; h.yaw = 0; h.pitch = -0.12; }); await wait(800);
 
 // run the complete examination with the demo driver inside the page, stopping at points of interest
 const stops = [
@@ -103,24 +103,24 @@ console.log('in-browser exam result', res);
 await wait(2500);
 await shot('14-result');
 
-// exam mode + debug view restrictions
+// exam mode: no training aids, outside view (V) allowed
 await page.click('#result button[data-act="menu"]');
 await page.click('button.mode[data-mode="exam"]');
 await page.click('#start');
 await wait(1500);
-await page.keyboard.press('F3'); await page.keyboard.press('KeyV'); await wait(600);
-const examFlags = await page.evaluate(() => ({ debug: window.__sim.app.debug, ext: window.__sim.app.ext, guideHidden: document.querySelector('#guide').classList.contains('hidden') }));
-console.log('exam mode flags (debug/ext must be false, guide hidden):', examFlags);
+await page.keyboard.press('KeyV'); await wait(600);
+const examFlags = await page.evaluate(() => ({ ext: window.__sim.app.ext, guideHidden: document.querySelector('#guide').classList.contains('hidden') }));
+console.log('exam mode flags (ext must be true, guide hidden):', examFlags);
 await shot('15-exam-mode');
 await page.click('button.mode[data-mode="training"]').catch(() => {});
 
-// training debug view
+// training outside view
 await page.keyboard.press('Escape'); await wait(300);
 await page.click('#pause button[data-act="menu"]');
 await page.click('button.mode[data-mode="training"]');
 await page.click('#start'); await wait(1200);
-await page.keyboard.press('F3'); await page.keyboard.press('KeyV'); await wait(1200);
-await shot('16-training-debug-external');
+await page.keyboard.press('KeyV'); await wait(1200);
+await shot('16-training-external');
 
 console.log('console errors:', errors.length ? errors : 'none');
 await browser.close();

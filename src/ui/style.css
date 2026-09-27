@@ -110,8 +110,6 @@ ol.route li { padding: 2px 0; }
 #crosshair { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
 #lockhint { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); background: var(--panel); padding: 6px 12px; border-radius: 6px; font-size: 13px; color: var(--muted); }
 
-#debug { position: fixed; left: 12px; top: 140px; z-index: 6; padding: 10px 12px; font: 12px/1.45 var(--mono); white-space: pre; max-height: calc(100% - 160px); overflow: auto; pointer-events: none; min-width: 300px; }
-
 /* ---------- result */
 .res-head { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; border-bottom: 2px dashed rgba(242, 241, 234, 0.35); padding-bottom: 14px; }
 .res-head .verdict { font: 700 clamp(48px, 9vw, 84px)/1.15 var(--display); letter-spacing: 0.04em; padding: 0 18px 4px; border-radius: 6px; }

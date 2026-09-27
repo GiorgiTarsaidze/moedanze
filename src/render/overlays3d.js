@@ -1,5 +1,5 @@
 // Training aids (trajectory ribbon, ghost stop position, highlighted boundaries, reference
-// stickers) and the debug/calibration overlay. Training aids are hidden in Exam Mode.
+// stickers). Training aids are hidden in Exam Mode.
 import * as THREE from 'three';
 import { LAYER } from './car3d.js';
 
@@ -105,58 +105,5 @@ export class TrainingOverlay {
         this.stickerRing.visible = !!st.aligned;
       }
     }
-  }
-}
-
-export class DebugOverlay {
-  constructor(scene, world, P) {
-    this.world = world; this.P = P;
-    this.group = new THREE.Group(); this.group.visible = false; scene.add(this.group);
-    const seg = [];
-    const push = (a, b, y = 0.05) => seg.push(a.x, world.heightAt(a.x, a.z) + y, a.z, b.x, world.heightAt(b.x, b.z) + y, b.z);
-    // element boundaries & zones
-    for (const el of Object.values(world.elements)) for (const s of el.stations) {
-      for (const l of s.lines || []) push(l.a, l.b, 0.07);
-      if (s.stopLine) push(s.stopLine.a, s.stopLine.b, 0.07);
-      if (s.outerArcs) for (const a of s.outerArcs) { const n = 40; for (let k = 0; k < n; k++) { const t0 = a.a0 + (a.a1 - a.a0) * k / n, t1 = a.a0 + (a.a1 - a.a0) * (k + 1) / n; push({ x: a.c.x + a.r * Math.cos(t0), z: a.c.z + a.r * Math.sin(t0) }, { x: a.c.x + a.r * Math.cos(t1), z: a.c.z + a.r * Math.sin(t1) }, 0.07); } }
-      if (s.opening) push(s.opening.a, s.opening.b, 0.3);
-    }
-    this.group.add(new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(seg, 3)), lineMat(0xff3355)));
-    // solid colliders (fences, walls, posts)
-    const col = [];
-    for (const s of world.segments) col.push(s.a.x, 0.6, s.a.z, s.b.x, 0.6, s.b.z);
-    for (const p of world.posts) { const n = 10; for (let k = 0; k < n; k++) { const a0 = k / n * Math.PI * 2, a1 = (k + 1) / n * Math.PI * 2; const y = world.heightAt(p.p.x, p.p.z) + 0.5; col.push(p.p.x + p.r * Math.cos(a0), y, p.p.z + p.r * Math.sin(a0), p.p.x + p.r * Math.cos(a1), y, p.p.z + p.r * Math.sin(a1)); } }
-    for (const l of world.lawns) for (let i = 0; i < l.poly.length; i++) { const a = l.poly[i], b = l.poly[(i + 1) % l.poly.length]; col.push(a.x, 0.2, a.z, b.x, 0.2, b.z); }
-    this.group.add(new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(col, 3)), lineMat(0xffa020)));
-    // route legs (invisible checkpoints) & one-way zones & finish
-    const rt = [];
-    for (const leg of Object.values(world.routeLegs)) for (let i = 0; i < leg.length - 1; i += 2) { const a = leg[i], b = leg[Math.min(i + 1, leg.length - 1)]; rt.push(a.x, world.heightAt(a.x, a.z) + 0.1, a.z, b.x, world.heightAt(b.x, b.z) + 0.1, b.z); }
-    for (const o of world.course.route.oneWay) for (let i = 0; i < o.poly.length; i++) { const a = o.poly[i], b = o.poly[(i + 1) % o.poly.length]; rt.push(a.x, 0.15, a.z, b.x, 0.15, b.z); }
-    const fin = world.course.route.finish; for (let k = 0; k < 24; k++) { const a0 = k / 24 * Math.PI * 2, a1 = (k + 1) / 24 * Math.PI * 2; rt.push(fin.p.x + fin.radius * Math.cos(a0), 0.1, fin.p.z + fin.radius * Math.sin(a0), fin.p.x + fin.radius * Math.cos(a1), 0.1, fin.p.z + fin.radius * Math.sin(a1)); }
-    this.group.add(new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(rt, 3)), lineMat(0x40c8ff, 0.8)));
-    // dynamic: vehicle footprint, wheel contacts, mirrors
-    this.carLines = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(3 * 2 * 16), 3)), lineMat(0x00ff88));
-    this.group.add(this.carLines);
-    this.wheelDots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff00ff, depthTest: false }), 6);
-    this.wheelDots.renderOrder = 5; this.group.add(this.wheelDots);
-  }
-  set visible(v) { this.group.visible = v; }
-  get visible() { return this.group.visible; }
-  update(V) {
-    if (!this.group.visible) return;
-    const c = V.corners(), a = this.carLines.geometry.attributes.position;
-    const y = V.y + 0.08;
-    let k = 0;
-    const put = (p, q) => { a.setXYZ(k++, p.x, y, p.z); a.setXYZ(k++, q.x, y, q.z); };
-    for (let i = 0; i < 4; i++) put(c[i], c[(i + 1) % 4]);
-    const w = V.wheels(); put(w[0], w[1]); put(w[2], w[3]);
-    const fa = V.frontAxle(), ra = { x: V.x, z: V.z }; put(ra, fa);
-    const fl = V.local(V.P.WHEELBASE + 3, 0); put(fa, fl);
-    while (k < a.count) a.setXYZ(k++, 0, -10, 0);
-    a.needsUpdate = true;
-    const M = new THREE.Matrix4();
-    const pts = [...w, ...V.mirrorPoints()];
-    pts.forEach((p, i) => { M.makeTranslation(p.x, V.y + 0.12, p.z); this.wheelDots.setMatrixAt(i, M); });
-    this.wheelDots.instanceMatrix.needsUpdate = true;
   }
 }

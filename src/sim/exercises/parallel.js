@@ -202,7 +202,7 @@ export function createCoach(env) {
           return { step, title: 'უკუსვლა პირდაპირ', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე სწორად. უყურეთ მარჯვენა სარკეს.',
             hint: 'როცა ადგილის წინა ჯოხი მარჯვენა სარკეში ყვითელ ნიშანს მიაღწევს — გაჩერდით და საჭე ბოლომდე მოაბრუნეთ მარჯვნივ.',
             readout: `მობრუნების წერტილამდე ${Math.max(0, d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(d * 0.8, 0.12, 0.8), stop: d <= 0.02,
-            sticker: { id: 'par-lock-right', target: frontPost, pose: idealPose, views: ['right', 'rear'] }, focus: frontPost };
+            sticker: { id: 'par-lock-right', target: frontPost, pose: idealPose, views: ['right'] }, focus: frontPost };
         }
         case 'lockRight':
           if (veh.steerWheel >= V.D.MAX_STEERING_WHEEL_ANGLE * 0.98) { go('arcRight'); break; }

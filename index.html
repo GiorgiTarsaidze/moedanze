@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>რუსთავის მოედანი — მართვის გამოცდა</title>
-<meta name="description" content="რუსთავის პრაქტიკული მოედნის (B კატეგორია, I ეტაპი) 3D სიმულატორი, მძღოლის თვალით.">
+<title>რუსთავის მოედანი</title>
+<meta name="description" content="რუსთავის პრაქტიკული მოედნის 3D სიმულატორი">
 <link rel="stylesheet" href="./src/ui/style.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
@@ -30,46 +30,43 @@
   <div id="lockhint" class="hidden">დააწკაპუნეთ ეკრანზე, რომ მაუსით მიმოიხედოთ</div>
 </div>
 
-<div id="debug" class="panel hidden"></div>
-
 <div id="menu" class="overlay">
   <div class="card wide">
     <div class="brand">
       <div>
         <h1>რუსთავის მოედანი</h1>
-        <div class="sub">მართვის პრაქტიკული გამოცდა · B კატეგორია · I ეტაპი (მოედანი)</div>
+        <div class="sub">მართვის პრაქტიკული გამოცდა - მოედანი</div>
       </div>
       <button id="start" class="primary">დაწყება</button>
     </div>
     <div class="modes">
       <button class="mode" data-mode="training">
         <b>ვარჯიში</b>
-        <span>მითითებები, ორიენტირები, ტრაექტორიები და ინსტრუქტორის ჩვენება. შეცდომის შემდეგაც გრძელდება.</span>
+        <span>მითითებები, ტრაექტორიები და ინსტრუქტორის რეჟიმი</span>
       </button>
       <button class="mode" data-mode="exam">
         <b>გამოცდა</b>
-        <span>დახმარების გარეშე, რუსთავის თანმიმდევრობით. 100 ქულა; ჩაჭრა — 40 საჯარიმო ქულა ან დისკვალიფიკაცია.</span>
+        <span>გამოცდის რეჟიმი დახმარებების გარეშე</span>
       </button>
     </div>
     <div class="menu-grid">
       <section>
         <h3>მართვა</h3>
         <dl class="keys2">
-          <dt><kbd>W</kbd> <kbd>S</kbd></dt><dd>გაზი · მუხრუჭი (ან <kbd>↑</kbd> <kbd>↓</kbd>)</dd>
+          <dt><kbd>W</kbd> <kbd>S</kbd></dt><dd>გაზი | მუხრუჭი (ან <kbd>↑</kbd> <kbd>↓</kbd>)</dd>
           <dt><kbd>A</kbd> <kbd>D</kbd></dt><dd>საჭე (ან <kbd>←</kbd> <kbd>→</kbd>)</dd>
-          <dt><kbd>F</kbd> <kbd>R</kbd> <kbd>N</kbd> <kbd>P</kbd></dt><dd>გადაცემა: წინ · უკუსვლა · ნეიტრალი · პარკინგი</dd>
-          <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>მარცხენა · მარჯვენა მოხვევის მაჩვენებელი</dd>
+          <dt><kbd>F</kbd> <kbd>R</kbd> <kbd>N</kbd> <kbd>P</kbd></dt><dd>გადაცემათა კოლოფი: წინ | უკუსვლა | ნეიტრალი | პარკინგი</dd>
+          <dt><kbd>Q</kbd> <kbd>E</kbd></dt><dd>მარცხენა/მარჯვენა მოხვევის მაჩვენებელი</dd>
           <dt><kbd>Space</kbd></dt><dd>სადგომი მუხრუჭი</dd>
-          <dt>მაუსი</dt><dd>მიმოხედვა · მარჯვენა ღილაკი — მიახლოება</dd>
-          <dt><kbd>C</kbd></dt><dd>პირდაპირ ყურება</dd>
-          <dt><kbd>Esc</kbd></dt><dd>პაუზა · საკონტროლო წერტილები</dd>
-          <dt><kbd>Backspace</kbd></dt><dd>ელემენტის თავიდან დაწყება</dd>
+          <dt>მაუსი</dt><dd>მიმოხედვა</dd>
+          <dt><kbd>Esc</kbd></dt><dd>პაუზა</dd>
+          <dt><kbd>Backspace</kbd></dt><dd>დაბრკოლების თავიდან დაწყება</dd>
         </dl>
-        <p class="small">ვარჯიშისას: <kbd>G</kbd> ინსტრუქტორი · <kbd>M</kbd> მინირუკა · <kbd>V</kbd> ხედი გარედან · <kbd>F3</kbd> ტექნიკური ხედი</p>
+        <p class="small"><kbd>G</kbd> ინსტრუქტორი | <kbd>M</kbd> მინირუკა | <kbd>V</kbd> ხედი გარედან</p>
       </section>
       <section>
         <h3>პარამეტრები</h3>
-        <label class="opt"><input type="checkbox" id="opt-selfcenter" checked> საჭე სვლისას თავისით სწორდება</label>
+        <label class="opt"><input type="checkbox" id="opt-selfcenter" checked> საჭე მოძრაობისას თავისით სწორდება</label>
         <label class="opt"><input type="checkbox" id="opt-audio" checked> ხმა</label>
         <label class="opt"><input type="checkbox" id="opt-shadows" checked> ჩრდილები</label>
         <label class="opt">სარკეების ხარისხი
@@ -83,9 +80,9 @@
           <li>პარალელური პარკირება</li>
           <li>უკუსვლით პარკირება (გარაჟი)</li>
           <li>ზიგზაგი</li>
-          <li>ჩიხი (შეზღუდული სიგანის შემობრუნება)</li>
+          <li>ჩიხი</li>
           <li>რვიანი</li>
-          <li>აღმართი (16 %)</li>
+          <li>აღმართი</li>
         </ol>
         <p class="small">სტარტი მარცხენა გზაზე: P, ჩართული სადგომი მუხრუჭი. დაძვრამდე ჩართეთ მარცხენა მოხვევის მაჩვენებელი.</p>
       </section>
@@ -97,9 +94,8 @@
   <div class="card">
     <h2>პაუზა</h2>
     <button data-act="resume" class="primary">გაგრძელება</button>
-    <button data-act="restart-ex">ელემენტის თავიდან დაწყება</button>
+    <button data-act="restart-ex">დაბრკოლების თავიდან დაწყება</button>
     <button data-act="restart-exam">გამოცდის თავიდან დაწყება</button>
-    <button data-act="debug" class="train-only">ტექნიკური ხედი (ჩართვა / გამორთვა)</button>
     <button data-act="menu">მთავარი მენიუ</button>
     <h3>საკონტროლო წერტილები</h3>
     <div class="cp-list"></div>

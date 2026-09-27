@@ -22,8 +22,8 @@ Course interpretation and assumptions: comments in `src/courses/rustavi/course.j
   - `exercises/<element>.js` each has `buildStation` (geometry), an Evaluator (scoring) and `createCoach` (training steps)
   - `assistant.js` training guidance + reference stickers; `optics.js` eye/mirror geometry shared with the renderer
   - `driver.js` path tracker + automated driver (demo mode and tests — drives through normal inputs only)
-- `src/render/` — three.js scene (`world3d.js`), car + cockpit (`car3d.js`), mirror render targets (`mirrors.js`), training/debug overlays
-- `src/ui/` — HUD, guidance card, toasts, minimap, debug text, result sheet; `src/main.js` bootstrap & loop
+- `src/render/` — three.js scene (`world3d.js`), car + cockpit (`car3d.js`), mirror render targets (`mirrors.js`), training overlays
+- `src/ui/` — HUD, guidance card, toasts, minimap, result sheet; `src/main.js` bootstrap & loop
 
 ## Conventions
 - Units are metres/seconds/radians. 2D sim plane: x = east, z = south (same as the PDF page); heading 0 = east, +π/2 = south.
@@ -32,4 +32,3 @@ Course interpretation and assumptions: comments in `src/courses/rustavi/course.j
 - Never move the car directly from game logic — everything goes through `Vehicle.step` inputs.
 - Scoring must use real geometry (tyre contact points, body outline), not checkpoints.
 - When fixing a bug in an element, add a case to `tests/test-suite.mjs` that reproduces it (use the `override` hook of `runElement`).
-- Debug view (F3, training mode) shows colliders, lines, zones and telemetry incl. map-pixel coordinates — use it to reproduce reports.

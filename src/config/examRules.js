@@ -69,7 +69,7 @@ export const examRules = {
       },
     },
     turn: {
-      nameKa: 'შეზღუდული სიგანის შემოსაბრუნებელი უბანი (ჩიხი)', nameEn: 'Limited-width turn (dead end)',
+      nameKa: 'ჩიხი', nameEn: 'Limited-width turn (dead end)',
       rules: {
         wrongStart: { points: 15, official: true,
           ka: 'ელემენტის შესრულება უნდა დაიწყოს მარჯვენა მხრიდან („სდექ–ხაზიდან")', en: 'Did not start from the right side (stop line)' },

@@ -1,4 +1,4 @@
-// DOM overlay: HUD, training guidance, mistake toasts, telemetry, minimap, debug text, result sheet.
+// DOM overlay: HUD, training guidance, mistake toasts, telemetry, minimap, result sheet.
 import { EXERCISES } from '../sim/exercises/index.js';
 
 const $ = (s) => document.querySelector(s);
@@ -10,7 +10,7 @@ export class UI {
   constructor(sim) {
     this.sim = sim;
     this.status = $('#hud-status'); this.guide = $('#guide'); this.toasts = $('#toasts');
-    this.tele = $('#telemetry'); this.debugEl = $('#debug'); this.mini = $('#minimap');
+    this.tele = $('#telemetry'); this.mini = $('#minimap');
     this.lockhint = $('#lockhint'); this.keys = $('#keys');
     this.showMinimap = true; this.lastStatus = '';
     this.buildMinimapBackground();
@@ -71,8 +71,8 @@ export class UI {
     const st = this.guide.querySelector('.g-sticker');
     if (g.stickerResolved) {
       const s = g.stickerResolved;
-      const where = s.view === 'eye' ? 'ყვითელი წერტილი მინაზე' : `ყვითელი ნიშანი ${{ rear: 'სალონის', left: 'მარცხენა', right: 'მარჯვენა' }[s.view]} სარკეში`;
-      st.textContent = s.aligned ? 'ორიენტირს დაემთხვა — იმოქმედეთ ახლა' : `ორიენტირი: ჯოხი → ${where}`;
+      const where = s.view === 'eye' ? 'ყვითელი წერტილი მინაზე' : `ყვითელი ნიშანი ${{ left: 'მარცხენა', right: 'მარჯვენა' }[s.view]} სარკეში`;
+      st.textContent = s.aligned ? 'ყვითელი ნიშანი დაემთხვა' : `ორიენტირი: ჯოხი → ${where}`;
       st.classList.toggle('aligned', !!s.aligned); st.classList.remove('hidden');
     } else st.classList.add('hidden');
   }
@@ -87,8 +87,8 @@ export class UI {
     this.keys.classList.toggle('hidden', !show);
     if (!show) return;
     const k = (key, label, on) => `<span class="${on ? 'on' : ''}"><kbd>${key}</kbd>${label}</span>`;
-    const html = (s.training ? k('V', 'ხედი გარედან', s.ext) + k('G', 'ინსტრუქტორი', s.demo) + k('M', 'მინირუკა', s.minimap) : '')
-      + k('Esc', 'პაუზა · საკონტროლო წერტილები', false);
+    const html = k('V', 'ხედი გარედან', s.ext) + (s.training ? k('G', 'ინსტრუქტორი', s.demo) + k('M', 'რუკა', s.minimap) : '')
+      + k('Esc', 'პაუზა', false);
     if (html !== this.lastKeys) { this.keys.innerHTML = html; this.lastKeys = html; }
   }
 
@@ -125,34 +125,6 @@ export class UI {
     const c = V.corners();
     g.fillStyle = '#ffd24a'; g.beginPath(); c.forEach((p, i) => (i ? g.lineTo(X(p), Z(p)) : g.moveTo(X(p), Z(p)))); g.closePath(); g.fill();
     const f = V.frontBumper(); g.fillStyle = '#e0524a'; g.beginPath(); g.arc(X(f), Z(f), 2.2, 0, Math.PI * 2); g.fill();
-  }
-
-  // ------------------------------------------------------------------ debug
-  updateDebug(show, sim, fps) {
-    this.debugEl.classList.toggle('hidden', !show);
-    if (!show) return;
-    const V = sim.vehicle, ex = sim.exam, S = sim.course.metersPerPx;
-    const ev = ex.evaluator;
-    const deg = (r) => (r * 180 / Math.PI).toFixed(1);
-    const contacts = V.contacts.map((c) => c.label).join(', ') || '-';
-    const last = ex.mistakes.slice(-6).map((m) => `  ${m.t.toFixed(1)}s ${m.element}.${m.rule} ${typeof m.points === 'number' ? '-' + m.points : m.points}${m.voided ? ' (void)' : ''}`).join('\n');
-    this.debugEl.textContent =
-`DEBUG / CALIBRATION        ${fps.toFixed(0)} fps
-pos        x ${V.x.toFixed(2)} m  z ${V.z.toFixed(2)} m
-map px     (${(V.x / S).toFixed(1)}, ${(V.z / S).toFixed(1)})
-heading    ${deg(V.heading)}°   pitch ${deg(V.pitch)}°  roll ${deg(V.roll)}°
-speed      ${V.v.toFixed(2)} m/s  (${V.speedKmh.toFixed(1)} km/h)
-steering   wheel ${deg(V.steerWheel)}°  road ${deg(V.delta)}°  R=${Math.abs(V.delta) > 1e-3 ? (V.P.WHEELBASE / Math.tan(Math.abs(V.delta))).toFixed(2) + ' m' : '∞'}
-pedals     thr ${V.throttle.toFixed(2)}  brk ${V.brake.toFixed(2)}  pbrake ${V.parkingBrake}
-gear ${V.gear}  engine ${V.engineOn ? 'on' : 'off'}  ind ${V.indicator}  odo ${V.odometer.toFixed(1)} m
-contacts   ${contacts}
-exam       ${ex.mode} · ${ex.state} · element ${ex.currentId ?? '-'} (${ev?.status ?? '-'}) station ${ev?.station?.id ?? '-'}
-phase      ${ev?.phase ?? '-'}
-info       ${ev ? JSON.stringify(ev.info) : '-'}
-coach      ${sim.guidance?.step ?? sim.guidance?.title ?? '-'}
-penalties  ${ex.penaltyPoints}  score ${ex.score}
-violations
-${last || '  none'}`;
   }
 
   // ------------------------------------------------------------------ result sheet

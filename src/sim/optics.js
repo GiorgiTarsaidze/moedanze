@@ -65,7 +65,7 @@ export function eyeBearing(p, P = VEHICLE) {
 // driver (that is how parking references are taught), windows/windscreen otherwise.
 export function locateTarget(pose, target, opts = {}, P = VEHICLE) {
   const pl = worldToLocal(pose, target);
-  const order = opts.views || ['right', 'left', 'rear'];
+  const order = opts.views || ['right', 'left'];
   for (const w of order) {
     if (!['left', 'right', 'rear'].includes(w)) continue;
     const cam = mirrorCamera(w, opts, P);
