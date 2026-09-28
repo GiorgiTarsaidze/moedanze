@@ -1,7 +1,7 @@
 // Bundles the app into self-contained single-file HTML builds:
 //   dist/index.html     – complete document (open directly or host anywhere static)
 //   dist/artifact.html  – body-only variant used for the claude.ai artifact
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,8 +20,11 @@ const body = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script type="
 const title = html.match(/<title>.*?<\/title>/)[0];
 const lang = html.match(/<html lang="([^"]+)"/)?.[1] ?? 'en';
 const desc = html.match(/<meta name="description"[^>]*>/)[0];
+const icons = html.match(/<link rel="(?:icon|apple-touch-icon)"[^>]*>/g) ?? [];   // tab icon / search-result icon, copied next to index.html
+const iconFiles = icons.map((l) => l.match(/href="\/([^"]+)"/)[1]);
 const inner = `${title}\n${desc}\n<style>\n${css}\n</style>\n${body}\n<script type="module">\n${js}\n</script>\n`;
 await mkdir(join(root, 'dist'), { recursive: true });
 await writeFile(join(root, 'dist/artifact.html'), inner);
-await writeFile(join(root, 'dist/index.html'), `<!doctype html>\n<html lang="${lang}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n${inner.replace(body, '').replace(/<script type="module">[\s\S]*<\/script>\n$/, '')}</head>\n<body>\n${body}\n<script type="module">\n${js}\n</script>\n</body>\n</html>\n`);
+for (const f of iconFiles) await copyFile(join(root, f), join(root, 'dist', f));
+await writeFile(join(root, 'dist/index.html'), `<!doctype html>\n<html lang="${lang}">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n${icons.map((l) => l + '\n').join('')}${inner.replace(body, '').replace(/<script type="module">[\s\S]*<\/script>\n$/, '')}</head>\n<body>\n${body}\n<script type="module">\n${js}\n</script>\n</body>\n</html>\n`);
 console.log(`dist/index.html ${(js.length / 1024).toFixed(0)} KB of JS`);
