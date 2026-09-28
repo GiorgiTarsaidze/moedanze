@@ -26,10 +26,10 @@ export class CarAudio {
     this.engGain = c.createGain(); this.engGain.gain.value = 0;
     this.engLP.connect(this.engAM); this.engAM.connect(this.engGain); this.engGain.connect(this.master);
     this.lfo = c.createOscillator(); this.lfo.frequency.value = 25;
-    const depth = c.createGain(); depth.gain.value = 0.25; this.lfo.connect(depth); depth.connect(this.engAM.gain); this.lfo.start();
+    const depth = this.lfoDepth = c.createGain(); depth.gain.value = 0; this.lfo.connect(depth); depth.connect(this.engAM.gain); this.lfo.start();
     this.tones = [['sine', 1, 0.5], ['triangle', 2, 1.0], ['sine', 4, 0.5], ['sine', 6, 0.15]].map(([type, m, amp]) => {
       const o = c.createOscillator(); o.type = type; const g = c.createGain(); g.gain.value = amp;
-      o.connect(g); g.connect(this.engLP); o.start(); return { o, m };
+      o.connect(g); g.connect(this.engLP); o.start(); return { o, m, g, amp };
     });
     const rumble = c.createGain(); rumble.gain.value = 0.35; loop(brown).connect(rumble); rumble.connect(this.engLP);
 
@@ -73,6 +73,11 @@ export class CarAudio {
     const f0 = Math.max(rpm / 60 * 2, 1);        // 4-cylinder firing frequency
     for (const { o, m } of this.tones) o.frequency.setTargetAtTime(f0 * m, t, 0.12);
     this.lfo.frequency.setTargetAtTime(f0, t, 0.12);
+    // near idle the firing frequency (~25 Hz) is too low to be heard as a tone: the pulse and the 1st tone
+    // sound like rapid clicking, so both fade out below ~2000 rpm and only the smooth hum stays
+    const pulse = Math.min(1, Math.max(0, (rpm - 1100) / 900));
+    this.lfoDepth.gain.setTargetAtTime(0.25 * pulse, t, 0.12);
+    this.tones[0].g.gain.setTargetAtTime(this.tones[0].amp * pulse, t, 0.12);
     this.engLP.frequency.setTargetAtTime(260 + V.throttle * 420 + rpm * 0.03, t, 0.15);
     this.engGain.gain.setTargetAtTime(on ? 0.07 + V.throttle * 0.06 : 0, t, 0.25);
     const sp = Math.abs(V.v);

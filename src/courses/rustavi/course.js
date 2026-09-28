@@ -167,17 +167,19 @@ const markingsPx = {
 // invisible progression checkpoints and the automated test driver.
 // ---------------------------------------------------------------------------------------------
 const route = {
-  start: { p: [92, 400], heading: 90 },                // heading in degrees (page coords, 90 = south)
+  // start and finish: on the left road beside parallel bay 2, before the turn to the garages (the exam starts with the garage)
+  start: { p: [108, 960], heading: 90 },               // heading in degrees (page coords, 90 = south)
   legs: {
-    toParallel: [[92, 400], [92, 520], [96, 600], [104, 660], [107, 720], [107, 800]],
-    toGarage: [[108, 830], [108, 900], [107, 990], [111, 1030], [124, 1058], [150, 1070], [200, 1071], [260, 1071]],   // ends 1.8 m from the box entrance
+    toGarage: [[108, 960], [107, 990], [111, 1030], [124, 1058], [150, 1070], [200, 1071], [260, 1071]],   // ends 1.8 m from the box entrance
     toZigzag: [[330, 1074], [420, 1074], [452, 1066], [470, 1045], [477, 1000], [477, 720], [476, 640], [470, 590], [450, 540], [428, 505], [419, 480], [419, 455]],
     toTurn: [[416, 190], [424, 150], [428, 110], [428, 80]],
     toFigure8: [[392, 70], [391, 90], [382, 103], [365, 110], [345, 118], [332, 135], [326, 147]],
     toHill: [[316, 170], [313, 150], [308, 125], [300, 100], [290, 82], [275, 68], [255, 62], [235, 61.5]],
-    toFinish: [[134, 61.5], [124, 62.8], [113, 66.5], [105, 72], [99.5, 80], [96, 89], [94.5, 99], [93.5, 130], [92, 200], [92, 300]],
+    toParallel: [[134, 61.5], [124, 62.8], [113, 66.5], [105, 72], [99.5, 80], [96, 89], [94.5, 99], [93.5, 130], [92, 200], [92, 300],
+      [92, 400], [92, 520], [96, 600], [104, 660], [107, 720], [107, 800]],
+    toFinish: [[108, 830], [108, 900], [108, 960]],
   },
-  finish: { p: [92, 300], radius: 6 },
+  finish: { p: [108, 960], radius: 6 },
   // Restart Exercise positions: immediately before each element (map px, heading in degrees)
   restart: {
     parallel: { p: [104, 650], heading: 90 },
@@ -196,14 +198,15 @@ const route = {
 };
 
 // Information signs (element number + name) and a gradient warning sign.
+// The number on an info sign is the element's place in `sequence`.
 const signsPx = [
-  { at: [66, 770], face: NORTH, type: 'info', text: '1', sub: 'პარალელური პარკირება' },
-  { at: [285, 1098], face: WEST, type: 'info', text: '2', sub: 'გარაჟი' },
-  { at: [500, 880], face: SOUTH, type: 'info', text: '2', sub: 'გარაჟი' },
-  { at: [519, 470], face: SOUTH, type: 'info', text: '3', sub: 'ზიგზაგი' },
-  { at: [521, 100], face: SOUTH, type: 'info', text: '4', sub: 'ჩიხი' },
-  { at: [236, 150], face: EAST, type: 'info', text: '5', sub: 'რვიანი' },
-  { at: [262, 42], face: EAST, type: 'info', text: '6', sub: 'აღმართი' },
+  { at: [66, 770], face: NORTH, type: 'info', element: 'parallel', sub: 'პარალელური პარკირება' },
+  { at: [285, 1098], face: WEST, type: 'info', element: 'garage', sub: 'გარაჟი' },
+  { at: [500, 880], face: SOUTH, type: 'info', element: 'garage', sub: 'გარაჟი' },
+  { at: [519, 470], face: SOUTH, type: 'info', element: 'zigzag', sub: 'ზიგზაგი' },
+  { at: [521, 100], face: SOUTH, type: 'info', element: 'turn', sub: 'ჩიხი' },
+  { at: [236, 150], face: EAST, type: 'info', element: 'figure8', sub: 'რვიანი' },
+  { at: [262, 42], face: EAST, type: 'info', element: 'hill', sub: 'აღმართი' },
   { at: [244, 42], face: EAST, type: 'steep', text: '16%' },
 ];
 
@@ -221,6 +224,8 @@ const outerBuildings = [
   { x: 610, y: -30, w: 90, d: 160, h: 15 }, { x: 640, y: 360, w: 70, d: 240, h: 27 }, { x: 620, y: 820, w: 100, d: 150, h: 12 },
   { x: 120, y: -230, w: 260, d: 60, h: 15 }, { x: 150, y: 1260, w: 300, d: 70, h: 15 },
 ];
+
+const SEQUENCE = ['garage', 'zigzag', 'turn', 'figure8', 'hill', 'parallel'];
 
 export const rustaviCourse = {
   id: 'rustavi',
@@ -252,8 +257,9 @@ export const rustaviCourse = {
     figure8: { stations: [{ id: 1, ...figure8 }] },
     hill: { stations: [hill] },
   },
-  // Rustavi sequence (derived from the one-way arrows & the loop around the stadium; see README).
-  sequence: ['parallel', 'garage', 'zigzag', 'turn', 'figure8', 'hill'],
+  // Rustavi sequence: the exam starts with the garage and ends with parallel parking (Rustavi instructors,
+  // 2026); it follows the one-way arrows in the loop around the stadium. Element numbers follow this order.
+  sequence: SEQUENCE,
   route: {
     start: { p: px(...route.start.p), heading: route.start.heading * Math.PI / 180 },
     legs: Object.fromEntries(Object.entries(route.legs).map(([k, v]) => [k, v.map(([x, y]) => px(x, y))])),
@@ -263,7 +269,7 @@ export const rustaviCourse = {
   // Which route leg leads to each element (training chevrons / autopilot)
   restart: Object.fromEntries(Object.entries(route.restart).map(([k, v]) => [k, { p: px(...v.p), heading: v.heading * Math.PI / 180 }])),
   legFor: { parallel: 'toParallel', garage: 'toGarage', zigzag: 'toZigzag', turn: 'toTurn', figure8: 'toFigure8', hill: 'toHill', finish: 'toFinish' },
-  signs: signsPx.map((s) => ({ ...s, at: px(...s.at) })),
+  signs: signsPx.map((s) => ({ ...s, at: px(...s.at), ...(s.element ? { text: String(SEQUENCE.indexOf(s.element) + 1) } : {}) })),
   trees: treesPx.map(([x, y]) => px(x, y)),
   outerBuildings: outerBuildings.map((b) => ({ ...px(b.x, b.y), w: b.w * S, d: b.d * S, h: b.h })),
 };

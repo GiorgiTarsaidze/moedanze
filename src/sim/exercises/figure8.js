@@ -110,6 +110,7 @@ export class Figure8Evaluator extends ElementEvaluator {
     this.progress = { top: 0, bottom: 0, wrong: 0 };
     this.segments = [];     // sequence of loops visited: 'T', 'B'
     this.prevC = null; this.prevAng = null; this.back = 0;
+    this.gateT = null;      // where the car centre last passed the opening gate outwards (0 = western end post, 1 = eastern)
   }
 
   // Where did the car centre cross the outer boundary? t in [0,1] along the opening
@@ -171,13 +172,22 @@ export class Figure8Evaluator extends ElementEvaluator {
     this.prevAng = { loop, a };
     if (this.progress.wrong > 70 * DEG) this.penalize('wrongRoute', 'წრე გაიარა არასწორი მიმართულებით');
 
+    // The opening is judged like a gate: the straight line between its two end posts. Where the car
+    // centre passes it on the way out decides the side. (The virtual arc between the posts bulges
+    // outwards, so a car heading off towards the hill crossed it west of the middle and was penalised.)
+    if (segSegIntersect(prev, c, g.opening.a, g.opening.b)) {
+      const outward = Math.hypot(c.x - g.C1.x, c.z - g.C1.z) > Math.hypot(prev.x - g.C1.x, prev.z - g.C1.z);
+      const ab = sub(g.opening.b, g.opening.a), ac = sub(c, g.opening.a);
+      this.gateT = outward ? (ac.x * ab.x + ac.z * ab.z) / (ab.x * ab.x + ab.z * ab.z) : null;
+    }
+
     // leaving the figure eight
     if (!inUnion(g, c)) {
-      const t = this.openingParam(g, c);
+      const t = this.gateT ?? this.openingParam(g, c);
       const done = this.progress.top > 200 * DEG && this.progress.bottom > 270 * DEG && this.segments.join('').startsWith('TBT');
       if (!done) this.penalize('wrongRoute', `გამოვიდა ორივე წრის დასრულებამდე (ზედა ${toDeg(this.progress.top).toFixed(0)}°, ქვედა ${toDeg(this.progress.bottom).toFixed(0)}°)`);
       else if (t === null) this.penalize('wrongRoute', 'გამოვიდა გარე ხაზის გადაკვეთით');
-      else if (t < 0.5) this.penalize('wrongExit', 'გამოვიდა ღიობის მარჯვენა ნახევრიდან');
+      else if (t < 0.5) this.penalize('wrongExit', 'გამოვიდა ღიობის მარჯვენა (დასავლეთის) ნახევრიდან');
       if (this.status === 'active') this.complete();
     }
     this.info = { top: toDeg(this.progress.top).toFixed(0), bottom: toDeg(this.progress.bottom).toFixed(0), seq: this.segments.join('') };
@@ -261,7 +271,7 @@ export function createCoach(env) {
       const t = +info.top || 0, b = +info.bottom || 0;
       let hint = 'ზედა წრე — საათის ისრის საწინააღმდეგოდ, საჭე მარცხნივ. მანქანის ცხვირი გარე ჯოხების გასწვრივ (~0.5 მ-ით შიგნით); შიდა წრეს ნუ მიეკვრით — უკანა საბურავი ჯოხებს მოედება.';
       if (info.seq === 'TB') hint = 'ქვედა წრე — საათის ისრის მიმართულებით, საჭე მარჯვნივ. ცხვირი გარე ჯოხების გასწვრივ; შიდა ჯოხებს მარჯვენა სარკე ნუ მიუახლოვდება.';
-      if (info.seq?.startsWith('TBT')) hint = 'დაასრულეთ ზედა წრე და გამოდით ღიობის მარცხენა ნახევრიდან — ღიობის ბოლო ჯოხს ნუ მიუახლოვდებით.';
+      if (info.seq?.startsWith('TBT')) hint = 'დაასრულეთ ზედა წრე და გამოდით ღიობის მარცხენა (აღმოსავლეთის) ნახევრიდან — ღიობის ბოლო ჯოხს ნუ მიუახლოვდებით.';
       return { step: 'loops', title: 'რვიანი', text: 'იმოძრავეთ ნელა და თანაბრად, ზოლის შუაში. არ გაჩერდეთ და არ ჩართოთ უკუსვლა.', hint,
         readout: `ზედა ${t}°  ქვედა ${b}°`, gear: 'D', path, speed: 1.15, showPath: true, lookahead: 0.7 };
     },

@@ -41,6 +41,7 @@ export class Exam {
 
   get sequence() { return this.course.sequence; }
   get currentId() { return this.sequence[this.index]; }
+  numberOf(id) { return this.sequence.indexOf(id) + 1; }   // element number = place in the course order
   get current() { return this.evaluator; }
   get penaltyPoints() { return this.mistakes.filter((m) => !m.voided).reduce((s, m) => s + (typeof m.points === 'number' ? m.points : 0), 0); }
   get score() { return this.rules.startPoints - this.penaltyPoints; }
@@ -230,7 +231,7 @@ export class Exam {
 
   result() {
     const elements = this.sequence.map((id) => ({
-      id, number: EXERCISES[id].number, name: this.elementName(id), nameEn: this.rules.elements[id].nameEn, nameKa: this.rules.elements[id].nameKa,
+      id, number: this.numberOf(id), name: this.elementName(id), nameEn: this.rules.elements[id].nameEn, nameKa: this.rules.elements[id].nameKa,
       status: this.results[id]?.status || (this.currentId === id ? 'incomplete' : 'not reached'),
       station: this.results[id]?.station,
       mistakes: this.mistakes.filter((m) => m.element === id && !m.voided),

@@ -273,6 +273,32 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
   check('Figure eight: incomplete loops → element failed', r.rules.includes('figure8.wrongRoute') && r.status === 'failed', r.rules.join(','));
 }
 {
+  // leaving the figure eight: the side is judged at the gate between the opening's end posts. Keep turning
+  // left past the coach's exit point (on the rear-axle circle), then drive straight out.
+  const exitAt = (deg) => {
+    let path = null;
+    return runElement('figure8', { override: ({ sim, V }) => {
+      const ev = sim.exam.evaluator;
+      if (ev?.status !== 'active' || !ev.info.seq?.startsWith('TBT')) return;
+      const C = sim.world.elements.figure8.stations[0].C1, rho = 5.0, DEGR = Math.PI / 180;
+      const th0 = Math.atan2(V.z - C.z, V.x - C.x);
+      if (!path && th0 > 0) return;                     // coach until the car is on the east side of the top loop
+      if (!path) {
+        const th1 = deg * DEGR;
+        path = [];
+        for (let th = th0; th >= th1; th -= 0.05) path.push({ x: C.x + rho * Math.cos(th), z: C.z + rho * Math.sin(th) });
+        const X = path[path.length - 1], h = { x: Math.sin(th1), z: -Math.cos(th1) };
+        for (let s = 0.25; s <= 9; s += 0.25) path.push({ x: X.x + h.x * s, z: X.z + h.z * s });
+      }
+      return { gear: 'D', path, speed: 1.15, lookahead: 0.7 };
+    }, maxTime: 150 });
+  };
+  const nw = exitAt(-35);          // heading ~35° left of north, towards the hill: crosses the virtual arc west of its middle
+  check('Figure eight: heading off NW through the eastern half of the gate → no wrong-exit penalty', nw.status === 'completed' && nw.rules.length === 0, `${nw.status} ${nw.rules.join(',')}`);
+  const west = exitAt(-47);        // carries on over the top and leaves through the western (entry) half
+  check('Figure eight: leaving through the western half → wrong exit', west.rules.includes('figure8.wrongExit'), west.rules.join(','));
+}
+{
   const r = runElement('hill');
   check('Hill clean run completes', r.status === 'completed' && r.rules.length === 0, r.rules.join(','));
 }
@@ -352,10 +378,10 @@ for (const [id, start, label] of [
   // restart exercise: pose & voided penalties
   const { sim } = makeSim('training');
   const ex = sim.exam;
-  ex.penalize('parallel', 'noParkingBrake', examRules.elements.parallel.rules.noParkingBrake, '');
+  ex.penalize('garage', 'multipleReverse', examRules.elements.garage.rules.multipleReverse, '');
   sim.vehicle.x += 30;
   sim.restartExercise();
-  const rp = sim.course.restart.parallel;
+  const rp = sim.course.restart.garage;
   check('Restart Exercise puts the car before the element', Math.hypot(sim.vehicle.x - rp.p.x, sim.vehicle.z - rp.p.z) < 1e-9);
   check('Restart Exercise voids that attempt’s penalties', ex.penaltyPoints === 0 && ex.restartsUsed === 1);
   sim.restartExam();
@@ -367,21 +393,21 @@ for (const [id, start, label] of [
   const ex = sim.exam, V = sim.vehicle;
   const driveWhile = (cond) => { let g = null, k = 0; const t0 = sim.time;
     while (cond() && sim.time - t0 < 300) { if (k++ % 4 === 0) g = sim.updateGuidance(); sim.step(FIXED_DT, driver.drive(g?.ready ? g.readyAction : g, FIXED_DT)); } };
-  check('Checkpoint "before parallel" exists at the start', ex.checkpoints.has('before:parallel'));
-  driveWhile(() => ex.currentId === 'parallel');
-  check('After an element: "after" and next "before" checkpoints are saved', ex.checkpoints.has('after:parallel') && ex.checkpoints.has('before:garage'), [...ex.checkpoints.keys()].join(','));
-  ex.penalize('garage', 'dq', { en: 'dq', points: 'DQ' }, '');
+  check('Checkpoint "before garage" exists at the start', ex.checkpoints.has('before:garage'));
+  driveWhile(() => ex.currentId === 'garage');
+  check('After an element: "after" and next "before" checkpoints are saved', ex.checkpoints.has('after:garage') && ex.checkpoints.has('before:zigzag'), [...ex.checkpoints.keys()].join(','));
+  ex.penalize('zigzag', 'dq', { en: 'dq', points: 'DQ' }, '');
   const endedByDq = ex.state === 'finished';
-  sim.restoreCheckpoint('before:garage');
-  const rp = sim.course.restart.garage;
-  check('Exam mode: restoring after a DQ resumes the exam at that element', endedByDq && ex.state === 'running' && ex.currentId === 'garage' && ex.evaluator.status === 'waiting' && !ex.fatal && ex.penaltyPoints === 0, `${ex.state} ${ex.currentId} ${ex.penaltyPoints}`);
+  sim.restoreCheckpoint('before:zigzag');
+  const rp = sim.course.restart.zigzag;
+  check('Exam mode: restoring after a DQ resumes the exam at that element', endedByDq && ex.state === 'running' && ex.currentId === 'zigzag' && ex.evaluator.status === 'waiting' && !ex.fatal && ex.penaltyPoints === 0, `${ex.state} ${ex.currentId} ${ex.penaltyPoints}`);
   check('Restored car stands at the checkpoint in P with the parking brake on', Math.hypot(V.x - rp.p.x, V.z - rp.p.z) < 1e-9 && V.gear === 'P' && V.parkingBrake && V.v === 0);
-  check('Restoring keeps earlier results and marks the run as restarted', ex.results.parallel?.status === 'completed' && ex.restartsUsed === 1);
-  driveWhile(() => ex.currentId === 'garage');           // coach first asks for D + parking brake off
-  check('Element can be completed after restoring a checkpoint', ex.results.garage?.status === 'completed' && rulesOf(ex.mistakes).length === 0, rulesOf(ex.mistakes).join(','));
-  const after = ex.checkpoints.get('after:parallel');
-  sim.restoreCheckpoint('after:parallel');
-  check('"After" checkpoint puts the car where the element ended, next element pending', Math.hypot(V.x - after.pose.p.x, V.z - after.pose.p.z) < 1e-9 && ex.currentId === 'garage' && !ex.results.garage && ex.restartsUsed === 2);
+  check('Restoring keeps earlier results and marks the run as restarted', ex.results.garage?.status === 'completed' && ex.restartsUsed === 1);
+  driveWhile(() => ex.currentId === 'zigzag');           // coach first asks for D + parking brake off
+  check('Element can be completed after restoring a checkpoint', ex.results.zigzag?.status === 'completed' && rulesOf(ex.mistakes).length === 0, rulesOf(ex.mistakes).join(','));
+  const after = ex.checkpoints.get('after:garage');
+  sim.restoreCheckpoint('after:garage');
+  check('"After" checkpoint puts the car where the element ended, next element pending', Math.hypot(V.x - after.pose.p.x, V.z - after.pose.p.z) < 1e-9 && ex.currentId === 'zigzag' && !ex.results.zigzag && ex.restartsUsed === 2);
   const t0 = sim.time;
   driveWhile(() => V.odometer - 0 < 5 && sim.time - t0 < 20);
   check('Coach releases the parking brake after a restore (demo driver moves off)', V.gear === 'D' && !V.parkingBrake && sim.time - t0 < 20, `${V.gear} pb=${V.parkingBrake}`);
@@ -389,9 +415,9 @@ for (const [id, start, label] of [
 {
   // skipping an element
   const r = runExam({ mode: 'exam', override: (sim, g, a) => {
-    if (sim.exam.currentId === 'parallel' && sim.exam.evaluator.status === 'waiting') {
-      const leg = sim.world.routeLegs.toGarage;
-      return { gear: 'D', path: [...sim.world.routeLegs.toParallel, ...leg], speed: 2.5, indicator: 'left', handbrake: false };
+    if (sim.exam.currentId === 'garage' && sim.exam.evaluator.status === 'waiting') {
+      const leg = sim.world.routeLegs.toZigzag;
+      return { gear: 'D', path: [...sim.world.routeLegs.toGarage, ...leg], speed: 2.5, indicator: 'left', handbrake: false };
     }
   }, maxTime: 120 });
   check('Driving past an element → element skipped, exam FAIL', !r.result.passed && r.result.mistakes.some((m) => m.rule === 'skipped'), r.result.reason);

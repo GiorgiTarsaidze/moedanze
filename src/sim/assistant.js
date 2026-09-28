@@ -33,7 +33,7 @@ export class Assistant {
     if (!ex.movedOff) {
       return { title: 'სტარტი', text: 'ფეხი მუხრუჭზე: ჩართეთ D (F), მოხსენით სადგომი მუხრუჭი (Space), ჩართეთ მარცხენა მოხვევის მაჩვენებელი (Q) და დაიძარით.',
         stop: true, gear: 'D', handbrake: false, indicator: 'left', ready: V.gear === 'D' && !V.parkingBrake && V.indicatorActive('left'),
-        path: this.legPath('toParallel'), readyAction: { path: this.legPath('toParallel'), speed: 2.0, gear: 'D', indicator: 'left' } };
+        path: this.legPath(this.course.legFor[ex.sequence[0]]), readyAction: { path: this.legPath(this.course.legFor[ex.sequence[0]]), speed: 2.0, gear: 'D', indicator: 'left' } };
     }
     if (this.parked) {
       if (V.gear === 'D' && !V.parkingBrake) this.parked = false;
@@ -54,7 +54,7 @@ export class Assistant {
       const end = leg[leg.length - 1];
       if (dist({ x: V.x, z: V.z }, end) < 4.5 || dist(V.frontBumper(), end) < 2.0) this.legDone = true;
       else {
-        return { title: `შემდეგი: ${name}`, text: `მიდით ელემენტამდე ${EXERCISES[id].number} — ${name}. მიჰყევით ისრებს.`,
+        return { title: `შემდეგი: ${name}`, text: `მიდით ელემენტამდე ${ex.numberOf(id)} — ${name}. მიჰყევით ისრებს.`,
           path: leg, speed: 2.4, gear: 'D', showRoute: true, indicator: 'off', leg: true };
       }
     }

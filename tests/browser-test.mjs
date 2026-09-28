@@ -51,13 +51,13 @@ await page.evaluate(() => { const h = window.__sim.head; h.yaw = 0; h.pitch = -0
 
 // run the complete examination with the demo driver inside the page, stopping at points of interest
 const stops = [
-  ['parallel', 'reverseStraight', '08a-parallel-reference-sticker'],
-  ['parallel', 'arcLeft', '08-parallel-reversing'],
   ['garage', 'reverseIn', '09-garage-reversing'],
   ['zigzag', 'weave', '10-zigzag'],
   ['turn', 'reverseArc', '11-deadend-turn'],
   ['figure8', 'loops', '12-figure8'],
   ['hill', 'hold', '13-hill-hold'],
+  ['parallel', 'reverseStraight', '08a-parallel-reference-sticker'],
+  ['parallel', 'arcLeft', '08-parallel-reversing'],
 ];
 await page.evaluate(() => { const s = window.__sim; s.sim.restartExam(); s.app.demo = true; });
 for (const [el, step, name] of stops) {

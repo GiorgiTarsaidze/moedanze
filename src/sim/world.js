@@ -25,7 +25,7 @@ export class World {
 
     for (const [id, def] of Object.entries(EXERCISES)) {
       const stations = (course.elements[id]?.stations || []).map((st) => def.module.buildStation(st, course.dims));
-      this.elements[id] = { id, number: def.number, stations };
+      this.elements[id] = { id, stations };
       for (const s of stations) {
         for (const p of s.posts || []) this.posts.push({ ...p, r: course.dims.POST_RADIUS, owner: id, station: s.id, label: p.name || 'ჯოხი' });
         for (const w of s.walls || []) this.segments.push({ a: w.a, b: w.b, t: 0.12, owner: id, id: `${id}-${s.id}-wall-${this.segments.length}`, label: w.name, kind: 'wall' });

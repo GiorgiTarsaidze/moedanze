@@ -10,10 +10,10 @@ import * as figure8 from './figure8.js';
 import * as hill from './hill.js';
 
 export const EXERCISES = {
-  parallel: { number: 1, module: parallel, Evaluator: parallel.ParallelEvaluator },
-  zigzag: { number: 2, module: zigzag, Evaluator: zigzag.ZigzagEvaluator },
-  turn: { number: 3, module: turn, Evaluator: turn.TurnEvaluator },
-  garage: { number: 4, module: garage, Evaluator: garage.GarageEvaluator },
-  figure8: { number: 5, module: figure8, Evaluator: figure8.Figure8Evaluator },
-  hill: { number: 6, module: hill, Evaluator: hill.HillEvaluator },
+  parallel: { module: parallel, Evaluator: parallel.ParallelEvaluator },
+  zigzag: { module: zigzag, Evaluator: zigzag.ZigzagEvaluator },
+  turn: { module: turn, Evaluator: turn.TurnEvaluator },
+  garage: { module: garage, Evaluator: garage.GarageEvaluator },
+  figure8: { module: figure8, Evaluator: figure8.Figure8Evaluator },
+  hill: { module: hill, Evaluator: hill.HillEvaluator },
 };

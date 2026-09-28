@@ -1,5 +1,4 @@
 // DOM overlay: HUD, training guidance, mistake toasts, telemetry, minimap, result sheet.
-import { EXERCISES } from '../sim/exercises/index.js';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -56,7 +55,7 @@ export class UI {
     let title;
     if (ex.state === 'finishing') title = 'დაბრუნდით ფინიშზე';
     else if (ex.state === 'finished') title = 'დასრულდა';
-    else title = `${EXERCISES[id].number}. ${rules.nameKa}`;
+    else title = `${ex.numberOf(id)}. ${rules.nameKa}`;
     const score = mode === 'training' ? `<span class="score">${ex.score} / 100</span>` : '<span>გამოცდა</span>';
     const timer = cur?.status === 'active' ? `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')} / ${tl / 60}:00` : (cur ? 'მიახლოება' : '');
     const html = `<div class="el">${esc(title)}</div><div class="row">${score}<span>${timer}</span></div><div class="steps">${steps}</div>`;
