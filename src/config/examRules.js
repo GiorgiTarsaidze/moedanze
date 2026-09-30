@@ -47,8 +47,6 @@ export const examRules = {
           ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოექცეს შემოსაზღვრულ უბანზე და არ კვეთავდეს მონიშვნის ხაზებს', en: 'Final position not entirely inside the parking space' },
         noParkingBrake: { points: 15, official: true,
           ka: 'შემოსაზღვრულ უბანზე გაჩერების შემდეგ სავალდებულოა სადგომი მუხრუჭის გამოყენება', en: 'Parking brake not applied after stopping in the space' },
-        noIndicatorOnExit: { points: 5, official: false, enabled: true,
-          ka: 'ადგილიდან გასვლისას არ ჩაირთო მარცხენა მოხვევის მაჩვენებელი', en: 'Left indicator not used when pulling out of the space (simulator rule)' },
         excessiveCorrections: { points: 5, official: false, enabled: false, maxDirectionChanges: 4,
           ka: 'ზედმეტად ბევრი წინ-უკან გასწორება', en: 'Too many forward/reverse corrections (simulator rule, disabled by default)' },
       },
@@ -93,7 +91,6 @@ export const examRules = {
           ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოთავსდეს შემოსაზღვრულ უბანზე და არ უნდა კვეთავდეს მონიშვნის ხაზებს', en: 'Final position not entirely inside the box' },
         markingOrPost: { points: 20, official: true,
           ka: 'ელემენტის შესრულებისას ავტომობილმა არ უნდა გადაკვეთოს მონიშვნები და არ უნდა დაეჯახოს ჯოხებს', en: 'Crossed a marking / hit a post or kerb' },
-        noIndicatorOnExit: { points: 5, official: false, enabled: true, ka: 'გარაჟიდან გასვლისას არ ჩაირთო მოხვევის მაჩვენებელი', en: 'Indicator not used when pulling out of the box (simulator rule)' },
       },
     },
     figure8: {
@@ -131,7 +128,6 @@ export const examRules = {
     collision: { points: 5, official: false, enabled: true, ka: 'შეჯახება დაბრკოლებასთან ან ბორდიურთან ელემენტის გარეთ', en: 'Contact with an obstacle / kerb outside an element' },
     wrongDirection: { points: 10, official: false, enabled: true, ka: 'მოძრაობა მოედნის მიმართულების საწინააღმდეგოდ', en: 'Drove against the course direction' },
     skippedElement: { points: 'FAIL', official: true, ka: 'ელემენტი გამოტოვებულია / არ შესრულებულა', en: 'Element skipped / not performed' },
-    noIndicatorMoveOff: { points: 5, official: false, enabled: true, ka: 'სტარტიდან დაძვრისას არ ჩაირთო მარცხენა მოხვევის მაჩვენებელი', en: 'Left indicator not used when moving off from the start' },
   },
 };
 

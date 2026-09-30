@@ -117,11 +117,8 @@ export class Exam {
     this.time += dt;
     const V = this.vehicle;
 
-    // moving off from the start: signal left
-    if (!this.movedOff && V.odometer > 0.5) {
-      this.movedOff = true;
-      if (!V.indicatorActive('left') && V.time - V.indicatorOnTime > 6) this.generalRule('noIndicatorMoveOff');
-    }
+    // moving off from the start
+    if (!this.movedOff && V.odometer > 0.5) this.movedOff = true;
 
     // wrong direction on one-way sections
     const c = V.center();

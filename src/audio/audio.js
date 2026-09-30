@@ -1,8 +1,8 @@
-// Procedural WebAudio sound: engine idle/load, tyre rolling, indicator relay, collisions,
+// Procedural WebAudio sound: engine idle/load, tyre rolling, collisions,
 // gear & parking-brake clicks, mistake chime. No audio files.
 // Kept deliberately soft: a low, rounded engine hum (no raw sawtooth buzz), quiet tyre rumble.
 export class CarAudio {
-  constructor() { this.ctx = null; this.enabled = true; this.lastBlink = false; }
+  constructor() { this.ctx = null; this.enabled = true; }
 
   start() {
     if (this.ctx || !this.enabled) return;
@@ -59,13 +59,12 @@ export class CarAudio {
     o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + 0.05);
   }
   click() { this.burst(1800, 0.03, 0.12, 3); }
-  tick(on) { this.burst(on ? 1300 : 950, 0.02, 0.09, 5); }
   thump() { this.burst(90, 0.3, 0.6, 1, 'lowpass'); this.burst(600, 0.1, 0.1, 1); }
   ratchet() { for (let i = 0; i < 5; i++) setTimeout(() => this.burst(2600, 0.02, 0.07, 6), i * 35); }
   chime() { this.tone(784, 0.6, 0.09); this.tone(587, 0.8, 0.09, 0.22); }
   success() { this.tone(523, 0.35, 0.07); this.tone(659, 0.35, 0.07, 0.14); this.tone(784, 0.6, 0.07, 0.28); }
 
-  update(V, blink) {
+  update(V) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     const on = V.engineOn;
@@ -83,8 +82,5 @@ export class CarAudio {
     const sp = Math.abs(V.v);
     this.roadGain.gain.setTargetAtTime(Math.min(0.05, sp * 0.012), t, 0.2);
     this.roadFilter.frequency.setTargetAtTime(220 + sp * 40, t, 0.2);
-    const ind = V.indicator !== 'off';
-    if (ind && blink !== this.lastBlink) this.tick(blink);
-    this.lastBlink = blink;
   }
 }

@@ -8,6 +8,7 @@
 import { makeFrame, toLocal, toWorld, line, text, L, tyreTouches, relHeading, bodyOutline,
   DirectionTracker, ElementEvaluator } from './common.js';
 import { DEG, clamp, wrapAngle } from '../math2d.js';
+import { worldToLocal, eyeBearing, inWindscreen } from '../optics.js';
 
 export function buildStation(st, dims) {
   const W = dims.TURN_WIDTH, hw = W / 2, Dp = dims.TURN_DEPTH, lw = dims.LINE_WIDTH;
@@ -122,7 +123,7 @@ export class TurnEvaluator extends ElementEvaluator {
 export function createCoach(env) {
   const { vehicle: V, dims } = env;
   const P = V.P, NOSE = P.WHEELBASE + P.FRONT_OVERHANG;
-  const PAST = 0.3, LEFT_GAP = 0.5, REV_TO = 120, SLOW = 0.8;   // PAST: nose past the 2nd pole (window -0.3..0.9 m)
+  const PAST = 0.3, LEFT_GAP = 0.5, SLOW = 0.8;   // PAST: nose past the 2nd pole (window -0.3..0.9 m)
   let step = 'approach', g = null, t0 = 0;
   return {
     id: 'turn',
@@ -147,6 +148,12 @@ export function createCoach(env) {
       const MAXS = V.D.MAX_STEERING_WHEEL_ANGLE * 0.98;
       const aTurn = g.post2R.a + PAST - NOSE;             // rear axle a where full left lock begins
       const post2 = g.post2R.p;
+      // reverse stop cue: the left side's first pole (next to the entrance) appears in the windscreen
+      // (the second lane shares the first lane's pole row, so take the nearest pole of either lane)
+      const want1L = toWorld(f, dims.TURN_POSTS_A[0], -g.hw);
+      const pole1L = env.stations.flatMap((st) => st.posts).reduce((best, p) => (Math.hypot(p.p.x - want1L.x, p.p.z - want1L.z) < Math.hypot(best.x - want1L.x, best.z - want1L.z) ? p.p : best), { x: 1e9, z: 1e9 });
+      const pl1 = { ...worldToLocal({ x: veh.x, z: veh.z, heading: veh.heading }, pole1L), y: 0.8 };
+      const pole1Seen = inWindscreen(pl1, P), toPillar = eyeBearing(pl1, P).yaw / DEG - P.WINDSCREEN_EDGE_DEG.left;
       const pose = (a, b) => { const p = toWorld(f, a, b); return { x: p.x, z: p.z, heading: Math.atan2(f.f.z, f.f.x) }; };
       switch (step) {
         case 'approach': {
@@ -175,11 +182,11 @@ export function createCoach(env) {
           return { step, title: 'უკუსვლა — საჭე ბოლომდე მარჯვნივ', text: 'მანქანა დგას: მოაბრუნეთ საჭე ბოლომდე მარჯვნივ და ჩართეთ R. უკუსვლა მხოლოდ ერთხელ შეიძლება.', gear: 'R', steer: 1, stop: true };
         case 'reverseArc': {
           const c = Math.min(clearRight, clearBack);
-          const done = r >= REV_TO || c < 0.45;
+          const done = pole1Seen || c < 0.45;                // c: safety stop before the right / entrance side
           if (done && still) { go('toDrive'); break; }
-          return { step, title: 'უკუსვლა', text: `ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ, სანამ მანქანა დაახლოებით ${REV_TO}°-ით არ შემობრუნდება. უყურეთ სარკეებს.`,
-            readout: `კუთხე ${r.toFixed(0)}° / ${REV_TO}° · უკან დარჩა ${c.toFixed(2)} მ`, gear: 'R', steer: 1,
-            speed: clamp((REV_TO - r) * 0.04, 0.08, 0.6), stop: done };
+          return { step, title: 'უკუსვლა', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა მხარის პირველი ჯოხი (შესასვლელთან) წინა მინაში გამოჩნდება.',
+            readout: pole1Seen ? 'ჯოხი წინა მინაშია — გაჩერდით' : `ჯოხი მარცხენა დგარამდე ${Math.max(0, -toPillar).toFixed(0)}° · უკან დარჩა ${c.toFixed(2)} მ`, gear: 'R', steer: 1,
+            speed: clamp(-toPillar * 0.03, 0.08, 0.6), stop: done, focus: pole1L };
         }
         case 'toDrive':
           if (veh.gear === 'D' && veh.steerWheel <= -MAXS) { go('driveOut'); break; }

@@ -3,6 +3,8 @@
 import { makeSim, runExam, printResult } from './harness.mjs';
 import { FIXED_DT } from '../src/sim/simulation.js';
 import { examRules } from '../src/config/examRules.js';
+import { worldToLocal, inWindscreen } from '../src/sim/optics.js';
+import { toWorld as toWorldT } from '../src/sim/exercises/common.js';
 
 let pass = 0, fail = 0;
 const results = [];
@@ -167,9 +169,9 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
   check('Garage: second reverse engagement → −15', r.rules.includes('garage.multipleReverse'), r.rules.join(','));
 }
 {
-  // bug report: following the mirror sticker the car always hit the far post. A person keeps their
-  // own gap, creeps (no pedals) and brakes 0.3 s after the sticker lines up, then obeys the coach.
-  for (const gap of [1.5, 2.2]) {
+  // A person keeps their own gap, creeps (no pedals) and brakes 0.3 s after the far pole reaches the
+  // yellow dot at the rear edge of the right rear window, then obeys the coach.
+  for (const gap of [1.8, 2.4, 2.8]) {
     let aligned = null, person = true;
     const r = runElement('garage', { override: ({ coach, sim, g, V }) => {
       if (!person || coach.step !== 'approach' || g?.leg) return;
@@ -179,15 +181,43 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
       if (braking && Math.abs(V.v) < 0.03) person = false;
       return { gear: 'D', track: { frame: f, b: -(gap + V.P.CAR_WIDTH / 2) }, speed: 1.6, stop: braking };
     } });
-    check(`Garage: stopping by the mirror sticker (gap ${gap} m, late brake) parks without touching`, r.status === 'completed' && r.rules.length === 0, `${r.status} ${r.rules.join(',')}`);
+    check(`Garage: stopping by the rear-window dot (gap ${gap} m, late brake) parks without touching`, r.status === 'completed' && r.rules.length === 0, `${r.status} ${r.rules.join(',')}`);
   }
 }
 {
   // keyboard users can only centre the wheel roughly (a tap moves it 20–40°): 25° left uncorrected in the
   // straight reversing steps must still give a clean parallel park and garage
-  for (const [id, steps] of [['parallel', ['reverse45', 'adjust']], ['garage', ['reverseIn']]]) for (const deg of [-25, 25]) {
+  for (const [id, steps] of [['parallel', ['reverseToLine', 'adjust']], ['garage', ['reverseIn']]]) for (const deg of [-25, 25]) {
     const r = runElement(id, { override: ({ g, a, V }) => (g && steps.includes(g.step) ? { ...a, steer: (deg * Math.PI / 180) / V.D.MAX_STEERING_WHEEL_ANGLE } : undefined) });
     check(`${id}: wheel left ${deg}° off centre while reversing straight → still clean`, r.status === 'completed' && r.rules.length === 0, `${r.status} ${r.rules.join(',')}`);
+  }
+}
+{
+  // bug report: the last hint kept asking to move 0.2 m forward / back before it completed. Turning 0.3 m
+  // late, or overshooting the turning point and backing up, must still park with no adjusting moves.
+  const d = (g, V) => { const p = g.sticker.pose; return (V.x - p.x) * Math.cos(p.heading) + (V.z - p.z) * Math.sin(p.heading); };
+  for (const [label, past] of [['0.3 m late', 0.3], ['0.8 m past (backs up)', 0.8]]) {
+    let adjustMoves = 0;
+    const r = runElement('parallel', { override: ({ coach, g, a, V }) => {
+      if (coach.step === 'approach' && g?.sticker) return d(g, V) < past ? { gear: 'D', track: g.track, speed: 1.0 } : { stop: true };
+      if (coach.step === 'adjust' && a && !a.stop) adjustMoves++;
+    } });
+    check(`Parallel: turning ${label} → parks with no forward/back adjusting`, r.status === 'completed' && r.rules.length === 0 && adjustMoves === 0, `${r.status} ${r.rules.join(',')} adjust=${adjustMoves}`);
+  }
+}
+{
+  // garage: reverse in until the left mirror passes the second pole on the left; braking 0.3 s late still fits
+  for (const late of [0, 0.3]) {
+    let passed = null, mirrorVsPole = null;
+    const r = runElement('garage', { override: ({ coach, sim, V, a }) => {
+      if (coach.step !== 'reverseIn' || !a) return;
+      const st = sim.world.elements.garage.stations[0], pole = st.posts.find((p) => p.role === 'near2').p, m = V.mirrorPoints()[0];
+      const along = (p) => (p.x - st.frame.o.x) * st.frame.r.x + (p.z - st.frame.o.z) * st.frame.r.z;
+      mirrorVsPole = along(m) - along(pole);
+      if (mirrorVsPole > -0.05) passed ??= sim.time;
+      if (passed !== null) return sim.time - passed < late ? { ...a, stop: false, speed: 0.4 } : { stop: true };
+    } });
+    check(`Garage: stop when the left mirror passes the second pole (${late} s late) → fully inside`, r.status === 'completed' && r.rules.length === 0 && Math.abs(mirrorVsPole) < 0.4, `${r.status} ${r.rules.join(',')} mirror-pole ${mirrorVsPole?.toFixed(2)}`);
   }
 }
 {
@@ -219,12 +249,28 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
   check('Zigzag: hitting a post → −15', r.rules.includes('zigzag.markingOrPost'), r.rules.join(','));
 }
 {
-  const r = runElement('turn');
+  // the reverse ends when the left side's first pole (at the entrance) appears in the windscreen
+  let seenAtStop = null;
+  const r = runElement('turn', { override: ({ coach, sim, V }) => {
+    if (coach.step === 'toDrive' && seenAtStop === null) {
+      const st = sim.world.elements.turn.stations[0], w = toWorldT(st.frame, sim.course.dims.TURN_POSTS_A[0], -st.hw);
+      const pole = sim.world.posts.reduce((b, p) => (Math.hypot(p.p.x - w.x, p.p.z - w.z) < Math.hypot(b.p.x - w.x, b.p.z - w.z) ? p : b));
+      seenAtStop = inWindscreen({ ...worldToLocal({ x: V.x, z: V.z, heading: V.heading }, pole.p), y: 0.8 });
+    }
+  } });
   check('Limited-width turn clean run completes', r.status === 'completed' && r.rules.length === 0, r.rules.join(','));
+  check('Dead end: reversing stops with the first left pole in the windscreen', seenAtStop === true, String(seenAtStop));
 }
 {
-  // leave through the right half
-  const r = runElement('turn', { override: ({ coach, sim }) => {
+  // leave through the right half. Reverse on to 120° first: at the coach's stop (first left pole in the
+  // windscreen, ~102°) the car already faces the left half and cannot reach the right one.
+  const r = runElement('turn', { override: ({ coach, sim, V }) => {
+    if (coach.step === 'reverseArc') {
+      const f = sim.world.elements.turn.stations[0].frame, d = V.heading - Math.atan2(f.f.z, f.f.x);
+      let turned = -Math.atan2(Math.sin(d), Math.cos(d)) * 180 / Math.PI; if (turned < -90) turned += 360;
+      if (turned < 120) return { gear: 'R', steer: 1, speed: 0.4 };
+      coach.jump('toDrive');
+    }
     if (coach.step === 'leave') { const st = sim.world.elements.turn.stations[0]; return { gear: 'D', track: { frame: { o: st.frame.o, f: { x: -st.frame.f.x, z: -st.frame.f.z }, r: { x: -st.frame.r.x, z: -st.frame.r.z } }, b: -2.3 }, speed: 1.0 }; }
   } });
   check('Turn: exiting on the entry side → disqualification', r.rules.includes('turn.wrongExit') && r.status === 'failed', r.rules.join(',') + ' ' + r.status);
@@ -327,7 +373,7 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
 // ---------------------------------------------------------------- other stations
 for (const [id, start, label] of [
   ['parallel', [107, 950, 90], 'Parallel parking at bay 3'],
-  ['garage', [477, 700, -90], 'Garage at box 4 (right road)'],
+  ['garage', [468, 700, -90], 'Garage at box 4 (right road)'],
   ['zigzag', [482, 560, -90], 'Zigzag in lane 2'],
   ['turn', [500, 150, -90], 'Dead-end turn in lane 2'],
 ]) {
@@ -417,7 +463,7 @@ for (const [id, start, label] of [
   const r = runExam({ mode: 'exam', override: (sim, g, a) => {
     if (sim.exam.currentId === 'garage' && sim.exam.evaluator.status === 'waiting') {
       const leg = sim.world.routeLegs.toZigzag;
-      return { gear: 'D', path: [...sim.world.routeLegs.toGarage, ...leg], speed: 2.5, indicator: 'left', handbrake: false };
+      return { gear: 'D', path: [...sim.world.routeLegs.toGarage, ...leg], speed: 2.5, handbrake: false };
     }
   }, maxTime: 120 });
   check('Driving past an element → element skipped, exam FAIL', !r.result.passed && r.result.mistakes.some((m) => m.rule === 'skipped'), r.result.reason);

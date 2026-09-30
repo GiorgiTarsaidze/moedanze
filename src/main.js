@@ -93,7 +93,7 @@ function startDrive() {
   input.enabled = true;
   audio.start(); audio.resume();
   canvas.requestPointerLock?.()?.catch?.(() => {});
-  ui.toast(app.mode === 'training' ? '<b>ვარჯიში</b><br>მიჰყევით მითითებებს' : '<b>გამოცდა დაიწყო</b><br>ჩართეთ მარცხენა ციმციმა და დაიძარით', 'info', 6000);
+  ui.toast(app.mode === 'training' ? '<b>ვარჯიში</b><br>მიჰყევით მითითებებს' : '<b>გამოცდა დაიწყო</b><br>დაიძარით', 'info', 6000);
 }
 // Leave the drive completely: stop the sound, end the run, clear pop-ups. Start begins a new run.
 function showMenu() {
@@ -160,9 +160,7 @@ function handleAction(a) {
     const order = ['P', 'R', 'N', 'D']; const i = order.indexOf(V.gear) + (a === 'gearUp' ? -1 : 1);
     if (i >= 0 && i < 4) { if (V.requestGear(order[i])) audio.click(); } return;
   }
-  if (a === 'indL') { V.setIndicator('left'); audio.click(); }
-  else if (a === 'indR') { V.setIndicator('right'); audio.click(); }
-  else if (a === 'parkingBrake') { V.parkingBrake = !V.parkingBrake; audio.ratchet(); }
+  if (a === 'parkingBrake') { V.parkingBrake = !V.parkingBrake; audio.ratchet(); }
   else if (a === 'restartExercise') { if (sim.restartExercise()) { input.releaseHeld(); ui.toast('<b>დაბრკოლება თავიდან იწყება</b>', 'info'); } }
   else if (a === 'hud') { app.hud = !app.hud; }
   else if (a === 'camera') app.ext = !app.ext;
@@ -177,7 +175,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix(); extCam.updateProjectionMatrix(); menuCam.updateProjectionMatrix();
 });
 
-let last = performance.now(), t = 0, uiTimer = 0, blink = false;
+let last = performance.now(), t = 0, uiTimer = 0;
 const eye = VEHICLE.EYE;
 function frame(now) {
   requestAnimationFrame(frame);
@@ -216,14 +214,18 @@ function frame(now) {
     training3d(guidance, training);
   } else training3d(null, false);
 
-  blink = car.update(V, t);
+  car.update(V, t);
   world3d.updateShadow({ x: V.x, z: V.z });
-  audio.update(V, blink && V.indicator !== 'off');
+  audio.update(V);
 
-  // driver head position (lean when looking to the side / back)
-  const sy = Math.sin(head.yaw);
-  camera.position.set(eye.x - Math.abs(sy) * 0.06 - (Math.abs(head.yaw) > 1.6 ? 0.08 : 0), eye.y + (Math.abs(head.yaw) > 1.8 ? 0.04 : 0), eye.z + sy * 0.13);
+  // driver head position (lean when looking to the side / back). Looking far back over a shoulder the
+  // torso turns too: the head rises and moves towards that side, so poles seen through the rear side
+  // windows are not hidden behind the passenger seat.
+  const sy = Math.sin(head.yaw), back = THREE.MathUtils.clamp((Math.abs(head.yaw) - 1.4) / 0.6, 0, 1);
+  camera.position.set(eye.x - Math.abs(sy) * 0.06 - (Math.abs(head.yaw) > 1.6 ? 0.08 : 0), eye.y + (Math.abs(head.yaw) > 1.8 ? 0.04 : 0) + back * 0.06, eye.z + sy * 0.13 + Math.sign(head.yaw) * back * 0.12);
   camera.rotation.set(head.pitch, -Math.PI / 2 - head.yaw, 0, 'YXZ');
+  const seatFade = head.yaw > 0 ? back : 0;
+  car.passengerSeat.opacity = 1 - 0.8 * seatFade; car.passengerSeat.depthWrite = seatFade === 0;
   const fov = input.zoom ? 30 : VEHICLE.CAMERA_FOV;          // hold right mouse button: lean in / zoom (mirror checks)
   if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 10); camera.updateProjectionMatrix(); }
 
@@ -245,7 +247,7 @@ function frame(now) {
     if (app.running) {
       ui.updateStatus();
       ui.updateGuide(sim.guidance, training && app.hud);
-      ui.updateTelemetry(V, blink);
+      ui.updateTelemetry(V);
       ui.drawMinimap(V, sim.guidance, training && app.minimap && app.hud);
       $('#lockhint').classList.toggle('hidden', input.locked || app.paused || app.resultShown);
       $('#hud-status').classList.toggle('hidden', !app.hud);

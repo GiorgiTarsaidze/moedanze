@@ -1,6 +1,6 @@
 // Path tracking and an automated driver that turns coach actions into the SAME control inputs a
 // player produces (steering-wheel target at the human hand rate, pedals, gear selector, parking
-// brake, indicators). Used by the automated tests and the optional "demo" in training mode.
+// brake). Used by the automated tests and the optional "demo" in training mode.
 // It never moves the car directly — all motion goes through the vehicle physics.
 
 import { toLocal, wrapAngle, clamp, dot, sub, rightOf, fromAngle } from './math2d.js';
@@ -77,11 +77,6 @@ export class AutoDriver {
     const still = Math.abs(V.v) < 0.03;
 
     // discrete controls
-    if (action.indicator !== undefined) {
-      const want = action.indicator;
-      if (want === 'off' && V.indicator !== 'off') V.setIndicator(V.indicator);
-      else if (want !== 'off' && V.indicator !== want) V.setIndicator(want);
-    }
     if (action.handbrake !== undefined && V.parkingBrake !== action.handbrake && (still || !action.handbrake)) V.parkingBrake = action.handbrake;
     let gearOk = true;
     if (action.gear && V.gear !== action.gear) {

@@ -31,7 +31,6 @@ The exam starts at the garages and ends with parallel parking, then you drive ba
 | S / ↓ | Brake |
 | A D / ← → | Steering |
 | F R N P | Gear: drive, reverse, neutral, park |
-| Q / E | Left / right indicator |
 | Space | Parking brake |
 | Mouse | Look around (right button: zoom in) |
 | Esc | Pause: resume, restart, checkpoints, main menu |

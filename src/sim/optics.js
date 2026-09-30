@@ -55,6 +55,12 @@ export function worldToLocal(pose, p) {
 export function eyeLocal(P = VEHICLE) { return { a: P.EYE.x, y: P.EYE.y, b: P.EYE.z }; }
 
 // Direction from the driver's eye to a local point, as yaw (+ right) / pitch (+ up) in radians.
+// Is a car-local point seen through the windscreen (between the A-pillars, ahead of the eye)?
+export function inWindscreen(p, P = VEHICLE) {
+  const b = eyeBearing(p, P);
+  return p.a > P.EYE.x && b.yaw > P.WINDSCREEN_EDGE_DEG.left * DEG && b.yaw < P.WINDSCREEN_EDGE_DEG.right * DEG;
+}
+
 export function eyeBearing(p, P = VEHICLE) {
   const e = eyeLocal(P);
   const d = { a: p.a - e.a, y: p.y - e.y, b: p.b - e.b };

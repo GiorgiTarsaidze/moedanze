@@ -24,12 +24,13 @@ export const COURSE_DIMS = {
   KERB_HEIGHT: 0.15,
 
   PARALLEL_SPACE_LENGTH: 8.0,    // (map) 7.9–8.1 m for bays 2 and 3
-  PARALLEL_SPACE_WIDTH: 3.0,     // (map) 3.0–3.2 m
+  PARALLEL_SPACE_WIDTH: 2.8,     // (instructor: "Rustavi's dimensions… 280 wide"; the map reads 3.0–3.2 m)
   PARALLEL_FRONT_ZONE: 6.0,      // (map) solid-edged zone between the space and the stop line (6.0–6.3 m)
   PARALLEL_STOPLINE_LENGTH: 6.7, // (map) comb stop line length from the kerb
 
   GARAGE_WIDTH: 3.0,             // (map) pockets measure 2.5–3.5 m; normalised
   GARAGE_LENGTH: 5.9,            // (map) 5.9–6.1 m
+  GARAGE_POLES_PER_SIDE: 4,      // (annex 4) evenly spaced along each long side, corners included
 
   ZIGZAG_WIDTH: 9.8,             // (map) corridor between outer lines
   ZIGZAG_FIRST_POST: 8.0,        // (map) 8.4 m / 8.0 m from the stop line
@@ -170,7 +171,7 @@ const route = {
   // start and finish: on the left road beside parallel bay 2, before the turn to the garages (the exam starts with the garage)
   start: { p: [108, 960], heading: 90 },               // heading in degrees (page coords, 90 = south)
   legs: {
-    toGarage: [[108, 960], [107, 990], [111, 1030], [124, 1058], [150, 1070], [200, 1071], [260, 1071]],   // ends 1.8 m from the box entrance
+    toGarage: [[108, 960], [107, 990], [109, 1020], [114, 1040], [123, 1054], [137, 1062], [155, 1066], [200, 1066], [260, 1066]],   // ends 2.4 m from the box entrance
     toZigzag: [[330, 1074], [420, 1074], [452, 1066], [470, 1045], [477, 1000], [477, 720], [476, 640], [470, 590], [450, 540], [428, 505], [419, 480], [419, 455]],
     toTurn: [[416, 190], [424, 150], [428, 110], [428, 80]],
     toFigure8: [[392, 70], [391, 90], [382, 103], [365, 110], [345, 118], [332, 135], [326, 147]],
@@ -183,7 +184,7 @@ const route = {
   // Restart Exercise positions: immediately before each element (map px, heading in degrees)
   restart: {
     parallel: { p: [104, 650], heading: 90 },
-    garage: { p: [200, 1071], heading: 0 },
+    garage: { p: [200, 1066], heading: 0 },
     zigzag: { p: [477, 700], heading: -90 },
     turn: { p: [428, 150], heading: -90 },
     figure8: { p: [350, 112], heading: 140 },

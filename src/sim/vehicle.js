@@ -28,8 +28,6 @@ export class Vehicle {
     this.gear = opts.gear ?? 'P';
     this.parkingBrake = opts.parkingBrake ?? true;
     this.engineOn = opts.engineOn ?? true;
-    this.indicator = 'off';           // 'off' | 'left' | 'right' | 'hazard'
-    this.indicatorOnTime = -1e9;
     this.odometer = 0;                // total distance travelled (m)
     this.pitch = 0; this.roll = 0; this.y = 0;
     this.wheelSpin = 0;               // wheel rotation angle for rendering
@@ -96,12 +94,6 @@ export class Vehicle {
   }
 
   // ---------------------------------------------------------------- controls
-  setIndicator(side) {
-    const next = this.indicator === side ? 'off' : side;
-    this.indicator = next;
-    if (next !== 'off') this.indicatorOnTime = this.time;
-  }
-  indicatorActive(side) { return this.indicator === side || this.indicator === 'hazard'; }
 
   requestGear(g) {
     if (!GEARS.includes(g) || g === this.gear) return true;

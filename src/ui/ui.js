@@ -76,9 +76,9 @@ export class UI {
     } else st.classList.add('hidden');
   }
 
-  updateTelemetry(V, blink) {
+  updateTelemetry(V) {
     const g = ['P', 'R', 'N', 'D'].map((x) => `<span class="${V.gear === x ? 'on' : ''}">${x}</span>`).join('');
-    this.tele.innerHTML = `<span class="ind ${V.indicatorActive('left') && blink ? 'on' : ''}">◀</span><span class="spd">${V.speedKmh.toFixed(0)}</span><span>კმ/სთ</span><span class="gear">${g}</span><span class="pb ${V.parkingBrake ? 'on' : ''}">P</span><span class="ind ${V.indicatorActive('right') && blink ? 'on' : ''}">▶</span>`;
+    this.tele.innerHTML = `<span class="spd">${V.speedKmh.toFixed(0)}</span><span>კმ/სთ</span><span class="gear">${g}</span><span class="pb ${V.parkingBrake ? 'on' : ''}">P</span>`;
   }
 
   // small key panel while driving; training-only keys are hidden in the exam, active toggles highlighted

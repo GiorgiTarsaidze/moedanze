@@ -30,14 +30,13 @@ await page.click('#start');
 await wait(2500);
 await shot('02-start-first-person');
 
-// keyboard driving: D (F), release parking brake, indicator, accelerate briefly
+// keyboard driving: D (F), release parking brake, accelerate briefly
 await page.keyboard.press('KeyF');
 await page.keyboard.press('Space');
-await page.keyboard.press('KeyQ');
 await page.keyboard.down('KeyW'); await wait(1500); await page.keyboard.up('KeyW');
 await page.keyboard.down('KeyA'); await wait(700); await page.keyboard.up('KeyA');
 await wait(600);
-const st1 = await page.evaluate(() => { const V = window.__sim.sim.vehicle; return { v: V.v, gear: V.gear, pb: V.parkingBrake, steer: V.steerWheel, odo: V.odometer, ind: V.indicator }; });
+const st1 = await page.evaluate(() => { const V = window.__sim.sim.vehicle; return { v: V.v, gear: V.gear, pb: V.parkingBrake, steer: V.steerWheel, odo: V.odometer }; });
 console.log('after keyboard driving', st1);
 await shot('03-keyboard-driving');
 

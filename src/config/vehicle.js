@@ -65,6 +65,9 @@ export const VEHICLE = {
   // Left-hand-drive car (Georgia drives on the right).
   EYE: { x: 1.22, y: 1.19, z: -0.36 },
   CAMERA_FOV: 64,             // vertical FOV in degrees for the driver camera
+  // Windscreen seen from EYE: yaw (deg, + right) of the A-pillars' inner edges at dashboard height
+  // (A-pillar bases in car3d.js at x 2.08, z ±0.80). A pole between them is "in the front window".
+  WINDSCREEN_EDGE_DEG: { left: -25, right: 51 },
 
   // Mirror positions (car-local) & aim (yaw deg outward from straight back, pitch deg down).
   // x/y keep the whole glass visible from EYE through the side window: behind the A-pillar base

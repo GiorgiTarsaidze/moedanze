@@ -90,9 +90,12 @@ export class TrainingOverlay {
     this.sticker.visible = this.stickerRing.visible = this.eyeSticker.visible = false;
     if (st) {
       if (st.view === 'eye') {
-        const d = 0.75, cp = Math.cos(st.pitch);
-        const E = this.P.EYE;
-        this.eyeSticker.position.set(E.x + d * cp * Math.cos(st.yaw), E.y + d * Math.sin(st.pitch), E.z + d * cp * Math.sin(st.yaw));
+        // Where the pole's top will be (car-local) once the car is at the reference pose: it lies on the real
+        // pole exactly when aligned, whatever the head does (a dot near the eye drifted off it when the head
+        // leans to look back). Same apparent size as before (0.01 m at 0.75 m).
+        const E = this.P.EYE, l = st.local, y = this.world.dims.POST_HEIGHT - 0.05;
+        this.eyeSticker.position.set(l.a, y, l.b);
+        this.eyeSticker.scale.setScalar(Math.hypot(l.a - E.x, y - E.y, l.b - E.z) / 0.75);
         this.eyeSticker.lookAt(this.car.group.localToWorld(new THREE.Vector3(E.x, E.y, E.z)));
         this.eyeSticker.visible = true;
       } else {

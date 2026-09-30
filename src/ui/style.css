@@ -101,7 +101,6 @@ ol.route li { padding: 2px 0; }
 #telemetry { position: absolute; right: 12px; bottom: 12px; padding: 8px 12px; font: 600 14px var(--mono); display: flex; gap: 14px; align-items: center; font-variant-numeric: tabular-nums; }
 #telemetry .spd { font: 700 26px var(--display); min-width: 64px; text-align: right; }
 #telemetry .gear span { opacity: 0.35; padding: 0 2px; } #telemetry .gear span.on { opacity: 1; color: var(--marking); }
-#telemetry .ind { color: #3ddc6b; opacity: 0.15; font-size: 18px; } #telemetry .ind.on { opacity: 1; }
 #telemetry .pb { color: var(--bad); opacity: 0.2; border: 2px solid currentColor; border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; font-size: 12px; } #telemetry .pb.on { opacity: 1; }
 /* centred in the space between the minimap (left) and the speed panel (right); wraps on narrow windows */
 #keys { position: absolute; left: 140px; right: 310px; bottom: 12px; width: fit-content; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; padding: 7px 14px; font-size: 13px; color: var(--muted); white-space: nowrap; }

@@ -31,9 +31,9 @@ export class Assistant {
     if (ex.state === 'finished') return { title: 'გამოცდა დასრულდა', text: 'იხილეთ შედეგების ფურცელი.', stop: true };
     // leaving the start position
     if (!ex.movedOff) {
-      return { title: 'სტარტი', text: 'ფეხი მუხრუჭზე: ჩართეთ D (F), მოხსენით სადგომი მუხრუჭი (Space), ჩართეთ მარცხენა მოხვევის მაჩვენებელი (Q) და დაიძარით.',
-        stop: true, gear: 'D', handbrake: false, indicator: 'left', ready: V.gear === 'D' && !V.parkingBrake && V.indicatorActive('left'),
-        path: this.legPath(this.course.legFor[ex.sequence[0]]), readyAction: { path: this.legPath(this.course.legFor[ex.sequence[0]]), speed: 2.0, gear: 'D', indicator: 'left' } };
+      return { title: 'სტარტი', text: 'ფეხი მუხრუჭზე: ჩართეთ D (F), მოხსენით სადგომი მუხრუჭი (Space) და დაიძარით.',
+        stop: true, gear: 'D', handbrake: false, ready: V.gear === 'D' && !V.parkingBrake,
+        path: this.legPath(this.course.legFor[ex.sequence[0]]), readyAction: { path: this.legPath(this.course.legFor[ex.sequence[0]]), speed: 2.0, gear: 'D' } };
     }
     if (this.parked) {
       if (V.gear === 'D' && !V.parkingBrake) this.parked = false;
@@ -42,7 +42,7 @@ export class Assistant {
     if (ex.state === 'finishing') {
       const d = dist(V.center(), this.course.route.finish.p);
       return { title: 'ფინიში', text: 'ყველა ელემენტი შესრულებულია. მიდით ფინიშამდე მარცხენა გზაზე და გაჩერდით.', readout: `${d.toFixed(0)} მ`,
-        path: this.legPath('toFinish'), speed: 2.2, gear: 'D', showRoute: true, indicator: 'off' };
+        path: this.legPath('toFinish'), speed: 2.2, gear: 'D', showRoute: true };
     }
     const id = ex.currentId;
     const ev = ex.evaluator;
@@ -55,7 +55,7 @@ export class Assistant {
       if (dist({ x: V.x, z: V.z }, end) < 4.5 || dist(V.frontBumper(), end) < 2.0) this.legDone = true;
       else {
         return { title: `შემდეგი: ${name}`, text: `მიდით ელემენტამდე ${ex.numberOf(id)} — ${name}. მიჰყევით ისრებს.`,
-          path: leg, speed: 2.4, gear: 'D', showRoute: true, indicator: 'off', leg: true };
+          path: leg, speed: 2.4, gear: 'D', showRoute: true, leg: true };
       }
     }
     const g = this.coaches[id].update(V, ev, time);

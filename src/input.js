@@ -10,7 +10,6 @@ export class Input {
     this.enabled = false;
     const map = {
       KeyF: 'gearD', KeyR: 'gearR', KeyN: 'gearN', KeyP: 'gearP', KeyZ: 'gearUp', KeyX: 'gearDown',
-      KeyQ: 'indL', Digit1: 'indL', KeyE: 'indR', Digit2: 'indR',
       Space: 'parkingBrake', KeyV: 'camera',
       KeyM: 'minimap', KeyG: 'demo', Escape: 'pause', Backspace: 'restartExercise', KeyH: 'hud',
     };

@@ -148,6 +148,9 @@ export function buildCar(P) {
   const dash = new THREE.MeshStandardMaterial({ color: 0x2a2d31, roughness: 0.85 });
   const dash2 = new THREE.MeshStandardMaterial({ color: 0x3b3f44, roughness: 0.8 });
   const seatMat = new THREE.MeshStandardMaterial({ color: 0x33373c, roughness: 0.95 });
+  // passenger seat back + headrest: faded while the driver looks back over the right shoulder (main.js),
+  // otherwise they hide the poles seen through the right rear window (garage / parallel parking cues)
+  const paxSeatMat = seatMat.clone(); paxSeatMat.transparent = true;
   const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); int.add(m); return m; };
   add(new THREE.BoxGeometry(0.42, 0.3, 1.64), dash, 2.07, 0.78, 0);                          // dashboard body
   add(new THREE.BoxGeometry(0.4, 0.04, 1.66), dash2, 2.1, 0.945, 0, 0, 0, -0.18);             // dash top
@@ -161,8 +164,8 @@ export function buildCar(P) {
     add(new THREE.BoxGeometry(2.35, 0.6, 0.04), dash2, 0.87, 0.66, sgn * 0.835);              // door panels
     add(new THREE.BoxGeometry(2.35, 0.05, 0.08), dash, 0.87, 0.955, sgn * 0.815);             // window sill
     add(new THREE.BoxGeometry(0.5, 0.13, 0.5), seatMat, 1.0, 0.46, sgn * 0.36);               // seats
-    add(new THREE.BoxGeometry(0.12, 0.66, 0.5), seatMat, 0.7, 0.82, sgn * 0.36, 0, 0, 0.2);
-    add(new THREE.BoxGeometry(0.1, 0.16, 0.28), seatMat, 0.62, 1.24, sgn * 0.36, 0, 0, 0.2);
+    add(new THREE.BoxGeometry(0.12, 0.66, 0.5), sgn > 0 ? paxSeatMat : seatMat, 0.7, 0.82, sgn * 0.36, 0, 0, 0.2);
+    add(new THREE.BoxGeometry(0.1, 0.16, 0.28), sgn > 0 ? paxSeatMat : seatMat, 0.62, 1.24, sgn * 0.36, 0, 0, 0.2);
   }
   add(new THREE.BoxGeometry(0.5, 0.13, 1.3), seatMat, 0.05, 0.46, 0);                          // rear bench
   add(new THREE.BoxGeometry(0.12, 0.6, 1.3), seatMat, -0.22, 0.8, 0, 0, 0, 0.18);
@@ -201,8 +204,7 @@ export function buildCar(P) {
 
   let lastDash = -1;
   return {
-    group: car, ext, int, wheels, steeringWheel: spinW, mirrorGlass, knob,
-    lights: { indL, indR, brake, rev },
+    group: car, ext, int, wheels, steeringWheel: spinW, mirrorGlass, knob, passengerSeat: paxSeatMat,
     update(V, t) {
       car.position.set(V.x, V.y, V.z);
       car.rotation.set(V.roll, -V.heading, V.pitch, 'YZX');
@@ -210,20 +212,16 @@ export function buildCar(P) {
       wheels[0].pivot.rotation.y = -wa.left; wheels[1].pivot.rotation.y = -wa.right;
       for (const w of wheels) w.spin.rotation.z = -V.wheelSpin;
       spinW.rotation.z = -V.steerWheel;
-      const blink = (t % 0.66) < 0.36;
-      indL.emissiveIntensity = V.indicatorActive('left') && blink ? 2.2 : 0;
-      indR.emissiveIntensity = V.indicatorActive('right') && blink ? 2.2 : 0;
       brake.emissiveIntensity = V.brake > 0.05 ? 2.0 : 0.25;
       rev.emissiveIntensity = V.gear === 'R' ? 1.6 : 0;
       const gx = { P: -0.05, R: -0.02, N: 0.01, D: 0.04 }[V.gear];
       knob.position.x = 1.55 - gx;
-      if (t - lastDash > 1 / 15) { lastDash = t; drawCluster(clusterCanvas, V, blink); clusterTex.needsUpdate = true; drawGear(gearCanvas, V.gear); gearTex.needsUpdate = true; }
-      return blink;
+      if (t - lastDash > 1 / 15) { lastDash = t; drawCluster(clusterCanvas, V); clusterTex.needsUpdate = true; drawGear(gearCanvas, V.gear); gearTex.needsUpdate = true; }
     },
   };
 }
 
-function drawCluster(c, V, blink) {
+function drawCluster(c, V) {
   const g = c.getContext('2d');
   const W = c.width, H = c.height;
   g.fillStyle = '#07090b'; g.fillRect(0, 0, W, H);
@@ -246,13 +244,6 @@ function drawCluster(c, V, blink) {
   const gears = ['P', 'R', 'N', 'D'];
   g.font = '700 30px Barlow, sans-serif';
   gears.forEach((gr, i) => { g.fillStyle = gr === V.gear ? '#ffd24a' : '#3d464e'; g.fillText(gr, 300 + i * 40, 104); });
-  // indicators
-  const arrow = (x, dir, on) => {
-    g.fillStyle = on ? '#35e06a' : '#1b2a20';
-    g.beginPath(); g.moveTo(x + dir * 22, 40); g.lineTo(x, 22); g.lineTo(x, 32); g.lineTo(x - dir * 16, 32); g.lineTo(x - dir * 16, 48); g.lineTo(x, 48); g.lineTo(x, 58); g.closePath(); g.fill();
-  };
-  arrow(300, -1, V.indicatorActive('left') && blink);
-  arrow(440, 1, V.indicatorActive('right') && blink);
   // parking brake
   g.lineWidth = 3; g.strokeStyle = V.parkingBrake ? '#ff3b30' : '#2a1614'; g.fillStyle = g.strokeStyle;
   g.beginPath(); g.arc(370, 160, 20, 0, Math.PI * 2); g.stroke();
