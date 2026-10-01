@@ -27,9 +27,15 @@ export const COURSE_DIMS = {
   PARALLEL_SPACE_WIDTH: 2.8,     // (instructor: "Rustavi's dimensions… 280 wide"; the map reads 3.0–3.2 m)
   PARALLEL_FRONT_ZONE: 6.0,      // (map) solid-edged zone between the space and the stop line (6.0–6.3 m)
   PARALLEL_STOPLINE_LENGTH: 6.7, // (map) comb stop line length from the kerb
-  PARALLEL_KERB_POLE_INSET: 1.75, // kerb-side poles: front and rear ones this far inside the bay ends, one in the middle.
-                                  // (instructor method: the inner front pole is in the middle of the right rear window
-                                  //  exactly where the full-lock turn must start)
+  // Poles at the bay corners (a rectangle), 3 on the kerb side (+ middle), 2 on the road side. ROAD offset = how
+  // far the road-side ones stand outside the dashed line; APPROACH_GAP = car side -> dashed line while driving past.
+  PARALLEL_ROAD_POLE_OFFSET: 0.18,
+  PARALLEL_KERB_POLE_OFFSET: 0.18,
+  PARALLEL_APPROACH_GAP: 0.75,
+  // Turn when the inner (kerb-side) front pole is seen at this angle from the driver's eye (deg from straight ahead):
+  // it has just come into the right rear side window (visible glass ~106–134°). Later than ~116° the car's side
+  // sweeps the road-side front pole during the turn.
+  PARALLEL_TURN_CUE_DEG: 112,
 
   GARAGE_WIDTH: 3.0,             // (map) pockets measure 2.5–3.5 m; normalised
   GARAGE_LENGTH: 5.9,            // (map) 5.9–6.1 m
@@ -106,14 +112,15 @@ const hill = { id: 1, o: px(210, 61.5), f: WEST };   // stop line
 // ---------------------------------------------------------------------------------------------
 // Lawns (raised kerbed green areas). Polygons in map px; garage notches generated from stations.
 // ---------------------------------------------------------------------------------------------
-const gw = m2px(D.GARAGE_WIDTH) / 2, gl = m2px(D.GARAGE_LENGTH);
+// garage notches are 0.6 m wider on each side (and deeper) than the boxes, so the box poles stand on asphalt
+const gw = m2px(D.GARAGE_WIDTH / 2 + 0.6), gl = m2px(D.GARAGE_LENGTH + 0.6);
 const lawnsPx = [
   // West strip + north-west block
-  [[42, -45], [303, -45], [303, 46], [100, 46], [89, 49], [82, 56], [80, 70], [78, 300], [74, 600], [70, 760], [70, 1169], [42, 1169]],
+  [[42, -45], [303, -45], [303, 46], [100, 46], [89, 49], [82, 56], [80, 70], [78, 300], [74, 600], [70, 760], [62, 772], [62, 1169], [42, 1169]],
   // C-shaped island around the figure eight
   [[133, 97], [231, 97], [243, 110], [247, 124], [242, 140], [230, 152], [177, 152], [177, 392], [344, 410], [352, 418], [355, 440], [350, 460], [340, 468], [133, 463]],
   // East strip, north part (ends at the east gate)
-  [[516, -45], [537, -45], [537, 276], [526, 276], [518, 270], [516, 260]],
+  [[525, -45], [537, -45], [537, 276], [526, 276], [518, 270], [516, 260], [516, 90], [525, 80]],   // cut back beside dead end 2 (its poles)
   // East strip, middle (down to garage 4)
   [[520, 313], [537, 313], [537, 596 - gw], [493, 596 - gw], [497, 573], [505, 563], [510, 480], [513, 400], [515, 335]],
   // Block between garages 4 and 3

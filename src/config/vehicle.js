@@ -68,9 +68,6 @@ export const VEHICLE = {
   // Windscreen seen from EYE: yaw (deg, + right) of the A-pillars' inner edges at dashboard height
   // (A-pillar bases in car3d.js at x 2.08, z ±0.80). A pole between them is "in the front window".
   WINDSCREEN_EDGE_DEG: { left: -25, right: 51 },
-  // Right rear side window seen from EYE at eye height: yaw (deg) of its visible front (B-pillar) and rear
-  // (C-pillar) edges, from the glass and pillar beams in car3d.js.
-  RIGHT_REAR_WINDOW_DEG: { front: 106, rear: 134 },
 
   // Mirror positions (car-local) & aim (yaw deg outward from straight back, pitch deg down). The view does not
   // change between D and R. hfov (optional): horizontal field; the image is then squeezed like a convex mirror.

@@ -139,20 +139,24 @@ export function createCoach(env) {
 
       switch (step) {
         case 'approach': {
-          if (d < 0.15 && still) { go(d < -0.35 ? 'backUp' : 'toReverse'); break; }
+          const hit = env.aligned(stopDot);
+          if ((d < 0.15 || hit) && still) { go(d < -0.35 && !hit ? 'backUp' : 'toReverse'); break; }
           const hint = gap < GAP_MIN ? 'ძალიან ახლოს ხართ გარაჟთან — გადაიწიეთ მარცხნივ, შესასვლელის ხაზამდე დაახლოებით 2.4 მ.'
             : gap > GAP_MAX ? 'ძალიან შორს ხართ — მიუახლოვდით გარაჟს, შესასვლელის ხაზამდე დაახლოებით 2.4 მ.' : '';
           return { step, title: 'მიუახლოვდით გარაჟს', text: 'გაიარეთ გარაჟის გასწვრივ, შესასვლელის ხაზიდან დაახლოებით 2.4 მ-ში (მოჩვენებითი მანქანა). გაჩერდით, როცა შესასვლელის შორეული ჯოხი მარჯვენა უკანა ფანჯრის უკანა კიდესთან (ყვითელ წერტილთან) მოვა.',
-            hint, readout: d < 12 ? `გაჩერების წერტილამდე ${Math.max(0, d).toFixed(1)} მ · ხაზამდე ${gap.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneB },
-            speed: clamp(d * 0.8, 0, 2.0), stop: d < 0.15, ghost: { frame: f, a: stopA, b: laneB, rel: 0 },
+            hint, readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : d < 12 ? `გაჩერების წერტილამდე ${Math.max(0, d).toFixed(1)} მ · ხაზამდე ${gap.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneB },
+            speed: clamp(d * 0.8, 0, 2.0), stop: d < 0.15 || hit, ghost: { frame: f, a: stopA, b: laneB, rel: 0 },
             sticker: stopDot, focus: farPost };
         }
         case 'backUp':
           // stopped past the point: reverse straight back (same reverse move as the arc, no extra engagement)
-          if (d > -0.15 && still) { go('lockRight'); break; }
+        {
+          const hit = env.aligned(stopDot);
+          if ((d > -0.15 || hit) && still) { go('lockRight'); break; }
           return { step, title: 'გადასცდით გაჩერების წერტილს', text: 'ჩართეთ R და საჭე სწორად ნელა იმოძრავეთ უკან, სანამ შორეული ჯოხი ყვითელ წერტილს არ დაემთხვევა. შემდეგ გაჩერდით.',
-            readout: `${Math.max(0, -d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(-d * 0.8, 0.12, 0.6), stop: d > -0.15,
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `${Math.max(0, -d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(-d * 0.8, 0.12, 0.6), stop: d > -0.15 || hit,
             sticker: stopDot, focus: farPost };
+        }
         case 'toReverse':
           if (veh.gear === 'R') { go('lockRight'); break; }
           return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R.', gear: 'R', stop: true, sticker: stopDot, focus: farPost };
@@ -161,11 +165,13 @@ export function createCoach(env) {
           return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'დაძვრამდე მოაბრუნეთ საჭე ბოლომდე მარჯვნივ.', gear: 'R', steer: 1, stop: true };
         case 'arc': {
           const r = -rel / DEG;
-          if (r >= 89.3 && still) { go('center'); break; }
           const s = arcStart || ra;                  // the full-lock arc ends R back and R into the box
+          const straight = { id: 'gar-straight', target: toWorld(f, -g.W / 2, g.LEN), pose: pose(s.a - R, s.b + R, -Math.PI / 2), views: ['left', 'right'] };
+          const hit = env.aligned(straight);
+          if ((r >= 89.3 || hit) && still) { go('center'); break; }
           return { step, title: 'შედით გარაჟში', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ, სანამ ორივე სარკეში არ დაინახავთ, რომ მანქანა გარაჟში სწორად ჯდება (ხაზები მანქანის პარალელურია).',
-            readout: `კუთხე ${r.toFixed(0)}° / 90°`, gear: 'R', steer: 1, speed: clamp((90 - r) * 0.03, 0.1, 0.7), stop: r >= 89.3,
-            sticker: { id: 'gar-straight', target: toWorld(f, -g.W / 2, g.LEN), pose: pose(s.a - R, s.b + R, -Math.PI / 2), views: ['left', 'right'] } };
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `კუთხე ${r.toFixed(0)}° / 90°`, gear: 'R', steer: 1, speed: clamp((90 - r) * 0.03, 0.1, 0.7), stop: r >= 89.3 || hit,
+            sticker: straight };
         }
         case 'center':
           // ±25° of steering wheel: a keyboard tap moves it 20–40°; left uncorrected the car still parks cleanly

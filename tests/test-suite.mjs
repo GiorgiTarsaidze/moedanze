@@ -206,6 +206,23 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
   }
 }
 {
+  // bug report: the reference dot turned green but the hint still asked to move 0.2 m. A matched (green) dot always
+  // ends its step: creep in slowly (stops right at the edge of the green band, where the distance readout still
+  // said 0.2 m) and brake as soon as it turns green → the next step starts right after the car stops.
+  for (const id of ['parallel', 'garage']) {
+    let green = false, stoppedAt = null, movedOn = null;
+    const r = runElement(id, { override: ({ coach, sim, g, V }) => {
+      if (movedOn !== null) return;
+      if (green && Math.abs(V.v) < 0.03) stoppedAt ??= sim.time;      // (the coach may move on in this same tick)
+      if (coach.step !== 'approach') { movedOn = stoppedAt !== null ? sim.time - stoppedAt : -1; return; }
+      if (!g?.stickerResolved) return;
+      green ||= g.stickerResolved.aligned;
+      return { ...g, speed: green ? 0 : +(g.readout?.match(/([0-9.]+) მ/)?.[1] ?? 9) < 1.5 ? 0.25 : 1.0, stop: green };
+    } });
+    check(`${id}: stopping when the reference dot turns green moves straight to the next step`, movedOn !== null && movedOn >= 0 && movedOn < 0.5 && r.rules.length === 0, `moved on after ${movedOn} s, ${r.status} ${r.rules.join(',')}`);
+  }
+}
+{
   // garage: reverse in until the left mirror passes the second pole on the left; braking 0.3 s late still fits
   for (const late of [0, 0.3]) {
     let passed = null, mirrorVsPole = null;

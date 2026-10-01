@@ -28,6 +28,15 @@ export function mirrorCamera(which, P = VEHICLE) {
   return { pos: { a: m.x - 0.01, y: m.y, b: side * (P.MIRROR_WIDTH / 2 - 0.02) }, dir, fov, aspect };
 }
 
+// Is a car-local point (behind the car) hidden from a side mirror by the car's own body? Plan view: it lies
+// inward of the line from the mirror past the rear corner on that side (the body is ~1 m tall at the back).
+export function hiddenByCar(which, p, P = VEHICLE) {
+  if (p.y > 1.0 || p.a > -P.REAR_OVERHANG) return false;
+  const cam = mirrorCamera(which, P), out = which === 'left' ? -1 : 1;           // out: sign of "outward" in b
+  const slope = (b, a) => (out * b - out * cam.pos.b) / (cam.pos.a - a);           // outward offset per metre back
+  return slope(p.b, p.a) < slope(out * P.CAR_WIDTH / 2, -P.REAR_OVERHANG);
+}
+
 // Project a car-local 3D point into a camera. Returns u,v in [0,1] (camera image, not mirrored),
 // plus `inFront` and `inside` flags.
 export function projectLocal(cam, p) {

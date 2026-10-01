@@ -157,13 +157,15 @@ export function createCoach(env) {
       const pose = (a, b) => { const p = toWorld(f, a, b); return { x: p.x, z: p.z, heading: Math.atan2(f.f.z, f.f.x) }; };
       switch (step) {
         case 'approach': {
-          const d = aTurn - ra.a;
+          // reference dot for the lane the car is actually in, so "matched" means "at the turning point"
+          const d = aTurn - ra.a, second = { id: 'turn-2nd', target: post2, pose: pose(aTurn, Math.round(ra.b * 20) / 20), views: [] };
           if (d <= 0) { go('turnLeft'); break; }
+          const hit = env.aligned(second);            // green ~0.15 m before the point: the hint already says "now"
           return { step, title: 'ჩიხი: შესვლა', text: 'შედით ჩიხში მარჯვენა ნახევრით, ნელა (≈3 კმ/სთ). სდექ-ხაზთან გაჩერება საჭირო არ არის, თუ ჩიხი თავისუფალია.',
             hint: 'როცა მარჯვენა მხარის მეორე ჯოხი მარჯვენა წინა ფანჯარაში გამოჩნდება (ცხვირი ოდნავ გასცდება მას), გაუჩერებლად მოაბრუნეთ საჭე ბოლომდე მარცხნივ.',
-            readout: fb.a > -6 ? `მობრუნების წერტილამდე ${d.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneR },
+            readout: hit ? 'ახლავე — საჭე ბოლომდე მარცხნივ' : fb.a > -6 ? `მობრუნების წერტილამდე ${d.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneR },
             speed: ra.a < -4 ? 1.4 : SLOW, highlight: g.lines.slice(0, 3), focus: post2,
-            sticker: { id: 'turn-2nd', target: post2, pose: pose(aTurn, laneR), views: [] } };
+            sticker: second };
         }
         case 'turnLeft':
           if (veh.steerWheel <= -MAXS) { go('forwardArc'); break; }

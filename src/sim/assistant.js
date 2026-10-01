@@ -12,7 +12,9 @@ export class Assistant {
     this.course = course; this.world = world; this.vehicle = vehicle; this.exam = exam;
     this.coaches = {};
     for (const [id, def] of Object.entries(EXERCISES)) {
-      this.coaches[id] = def.module.createCoach({ vehicle, dims: world.dims, stations: world.elements[id].stations, course });
+      // aligned(sticker): the reference mark is matched right now (green). A matched mark always ends its step.
+      this.coaches[id] = def.module.createCoach({ vehicle, dims: world.dims, stations: world.elements[id].stations, course,
+        aligned: (s) => this.resolveSticker(s).aligned });
     }
     this.stickerCache = new Map();
     this.reset();
