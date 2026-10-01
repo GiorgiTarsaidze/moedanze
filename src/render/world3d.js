@@ -33,6 +33,30 @@ function mergedMesh(geos, material, { cast = false, receive = false } = {}) {
   const m = new THREE.Mesh(mergeGeos(geos), material); m.castShadow = cast; m.receiveShadow = receive; return m;
 }
 
+// Football pitch inside the stadium: white lines (one merged mesh) and two goals.
+function buildPitchMarkings(root, poly) {
+  const xs = poly.map((p) => p.x), zs = poly.map((p) => p.z);
+  const x0 = Math.min(...xs) + 1, x1 = Math.max(...xs) - 1, z0 = Math.min(...zs) + 1, z1 = Math.max(...zs) - 1;
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, lw = 0.12, y = 0.05, geos = [];
+  const strip = (ax, az, bx, bz) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(Math.hypot(bx - ax, bz - az) + lw, lw));
+    m.rotation.set(-Math.PI / 2, -Math.atan2(bz - az, bx - ax), 0, 'YXZ'); m.position.set((ax + bx) / 2, y, (az + bz) / 2);
+    geos.push(baked(m));
+  };
+  const rect = (ax, az, bx, bz) => { strip(ax, az, bx, az); strip(bx, az, bx, bz); strip(bx, bz, ax, bz); strip(ax, bz, ax, az); };
+  rect(x0, z0, x1, z1);                                       // touch and goal lines
+  strip(x0, cz, x1, cz);                                      // halfway line
+  const ring = new THREE.Mesh(new THREE.RingGeometry(6 - lw / 2, 6 + lw / 2, 64)); ring.rotation.x = -Math.PI / 2; ring.position.set(cx, y, cz); geos.push(baked(ring));
+  for (const [zg, s] of [[z0, 1], [z1, -1]]) {
+    rect(cx - 10, zg, cx + 10, zg + s * 9);                   // penalty area
+    rect(cx - 4.5, zg, cx + 4.5, zg + s * 3);                 // goal area
+    const post = (dx) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.0, 0.1)); m.position.set(cx + dx, 1.0, zg); return baked(m); };
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.1, 0.1)); bar.position.set(cx, 2.0, zg);
+    geos.push(post(-2.5), post(2.5), baked(bar));            // 5 x 2 m goal
+  }
+  root.add(mergedMesh(geos, new THREE.MeshLambertMaterial({ color: 0xf2f2ee, side: THREE.DoubleSide }), { cast: true }));
+}
+
 export function buildWorld3D(scene, world, opts = {}) {
   const course = world.course;
   const root = new THREE.Group();
@@ -100,15 +124,7 @@ export function buildWorld3D(scene, world, opts = {}) {
   };
   flatPoly(st.fence, 0x3f6b3c, 0.02);
   flatPoly(st.details.pitch, 0x3f8f3e, 0.03);
-  flatPoly(st.details.court, 0xd9773a, 0.04);
-  const extrude = (poly, h, mat) => {
-    const shape = new THREE.Shape(poly.map((p) => new THREE.Vector2(p.x, -p.z)));
-    const g = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false }); g.rotateX(-Math.PI / 2);
-    const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; root.add(m); return m;
-  };
-  const bTex = windowsTexture(5); bTex.repeat.set(0.12, 0.12);
-  extrude(st.details.building, 9, [new THREE.MeshLambertMaterial({ color: 0x9a968c }), new THREE.MeshLambertMaterial({ map: bTex })]);
-  extrude(st.details.stand, 3.2, new THREE.MeshLambertMaterial({ color: 0x8e9396 }));
+  buildPitchMarkings(root, st.details.pitch);
   buildFence(root, st.fence, st.fenceHeight, true);
   buildFence(root, course.boundary, 2.2, true);
 

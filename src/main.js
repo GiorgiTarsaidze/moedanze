@@ -63,6 +63,7 @@ const demo = new AutoDriver(sim.vehicle);
 
 const app = { menu: true, running: false, paused: false, mode: store.get('mode', 'training'), demo: false, ext: false, minimap: true, hud: true, resultShown: false };
 const head = { yaw: 0, pitch: -0.12, targetYaw: null };
+const orbit = { yaw: 0, pitch: 0.5 };   // outside view (V): mouse orbits the camera around the car; yaw 0 = behind it
 
 // ------------------------------------------------------------------ menu
 function selectMode(m) { app.mode = m; document.querySelectorAll('button.mode').forEach((b) => b.classList.toggle('selected', b.dataset.mode === m)); store.set('mode', m); }
@@ -86,7 +87,7 @@ function startDrive() {
   sim.setMode(app.mode);
   app.menu = false; app.running = true; app.paused = false; app.resultShown = false; app.demo = false;
   sim.paused = false;                // "restart exam" from the pause menu used to leave the physics paused
-  app.ext = false;
+  app.ext = false; orbit.yaw = 0; orbit.pitch = 0.5;
   head.yaw = 0; head.pitch = -0.12;
   $('#menu').classList.add('hidden'); $('#result').classList.add('hidden'); $('#pause').classList.add('hidden');
   $('#hud').classList.remove('hidden');
@@ -196,6 +197,11 @@ function frame(now) {
 
   // head / mouse look
   const look = input.takeLook();
+  if (app.ext) {          // outside view: the mouse turns the camera around the car instead of the driver's head
+    orbit.yaw -= look.dx * 0.0022 * settings.sens;
+    orbit.pitch = THREE.MathUtils.clamp(orbit.pitch + look.dy * 0.0022 * settings.sens, 0.08, 1.35);
+    look.dx = look.dy = 0;
+  }
   if (look.dx || look.dy) head.targetYaw = null;
   head.yaw = THREE.MathUtils.clamp(head.yaw + look.dx * 0.0022 * settings.sens, -2.6, 2.6);
   head.pitch = THREE.MathUtils.clamp(head.pitch - look.dy * 0.0022 * settings.sens, -1.05, 0.6);
@@ -231,9 +237,10 @@ function frame(now) {
 
   let cam = camera;
   if (app.ext) {
-    const f = V.forward, back = 9, up = 5;
-    extCam.position.set(V.x - f.x * back, V.y + up, V.z - f.z * back);
-    extCam.lookAt(V.x + f.x * 3, V.y + 0.8, V.z + f.z * 3);
+    const c = V.center(), dist = input.zoom ? 6 : 10;   // right mouse button: closer
+    const a = V.heading + Math.PI + orbit.yaw, h = Math.cos(orbit.pitch) * dist;
+    extCam.position.set(c.x + Math.cos(a) * h, V.y + 0.8 + Math.sin(orbit.pitch) * dist, c.z + Math.sin(a) * h);
+    extCam.lookAt(c.x, V.y + 0.8, c.z);
     cam = extCam;
   }
   if (window.__sim?.viewCam) cam = window.__sim.viewCam;
@@ -262,4 +269,4 @@ function training3d(g, show) {
 requestAnimationFrame(frame);
 
 // test hook (used by the automated browser test)
-window.__sim = { sim, app, startDrive, handleAction, THREE, renderer, scene, camera, head, mirrors, car, audio, viewCam: null };
+window.__sim = { sim, app, startDrive, handleAction, THREE, renderer, scene, camera, head, orbit, mirrors, car, audio, viewCam: null };

@@ -50,10 +50,11 @@ export const COURSE_DIMS = {
   FIG8_POST_SPACING: 2.9,        // (annex 4) posts on the lines: 8 per inner circle, outer line ~23° apart
 
   HILL_GRADIENT: 0.16,           // (spec) >= 16 %
-  HILL_INCLINE: 6.5,             // (std) length of the 16 % incline
-  HILL_PLATEAU: 1.5,             // (std)
-  HILL_DECLINE: 4.5,             // (std) steeper descent (23 %) — limited by the space before the corner
-  HILL_STOPLINE_BEFORE_CREST: 0.5,
+  // Shape after annex 4 (drawing 6): up, a flat top, and down again about as long as the way up.
+  HILL_INCLINE: 6.5,             // (std) length of the 16 % incline (annex: V+1 m to the stop line + 1 m)
+  HILL_PLATEAU: 3.0,             // (annex V+1 m; shortened to fit before the corner, still longer than the wheelbase)
+  HILL_DECLINE: 6.5,             // (annex) 16 % back down
+  HILL_STOPLINE_BEFORE_CREST: 1.0, // (annex) stop line 1 m before the top
   HILL_LANE_WIDTH: 3.87,         // (map) channel between the lawn and the lane line
 };
 
@@ -95,7 +96,9 @@ const figure8 = {
   bottomDirection: 'cw',   // bottom loop clockwise
 };
 
-const hill = { id: 1, o: px(176, 61.5), f: WEST };   // stop line ("stub" line in the PDF), westbound
+// Westbound. The map's stop-line stub is at x 176, but up + top + down (annex 4) does not fit between it and the
+// corner, so the hill sits 4.5 m further east, on the open tarmac where cars come up from the figure eight.
+const hill = { id: 1, o: px(210, 61.5), f: WEST };   // stop line
 
 // ---------------------------------------------------------------------------------------------
 // Lawns (raised kerbed green areas). Polygons in map px; garage notches generated from stations.
@@ -123,11 +126,9 @@ const lawnsPx = [
 
 // Stadium enclosure (fenced, not drivable). Inner details only for rendering.
 const stadiumPx = [[130, 521], [384, 527], [410, 540], [430, 558], [438, 575], [436, 1005], [428, 1019], [132, 1019]];
+// Inside the stadium fence there is only a football pitch (~38 x 60 m, goals at the north and south ends).
 const stadiumDetailsPx = {
-  building: [[176, 525], [220, 529], [228, 548], [360, 551], [355, 625], [186, 628]],
-  pitch: [[197, 645], [378, 648], [376, 987], [194, 983]],
-  court: [[247, 733], [328, 733], [328, 900], [248, 898]],
-  stand: [[163, 731], [208, 731], [208, 898], [165, 898]],
+  pitch: [[140, 560], [428, 560], [428, 1008], [140, 1008]],
 };
 
 // Ground perimeter (fence) and gates
@@ -175,7 +176,7 @@ const route = {
     toZigzag: [[330, 1074], [420, 1074], [452, 1066], [470, 1045], [477, 1000], [477, 720], [476, 640], [470, 590], [450, 540], [428, 505], [419, 480], [419, 455]],
     toTurn: [[416, 190], [424, 150], [428, 110], [428, 80]],
     toFigure8: [[392, 70], [391, 90], [382, 103], [365, 110], [345, 118], [332, 135], [326, 147]],
-    toHill: [[316, 170], [313, 150], [308, 125], [300, 100], [290, 82], [275, 68], [255, 62], [235, 61.5]],
+    toHill: [[316, 170], [315, 140], [311, 110], [304, 88], [294, 72], [281, 64], [268, 61.5]],
     toParallel: [[134, 61.5], [124, 62.8], [113, 66.5], [105, 72], [99.5, 80], [96, 89], [94.5, 99], [93.5, 130], [92, 200], [92, 300],
       [92, 400], [92, 520], [96, 600], [104, 660], [107, 720], [107, 800]],
     toFinish: [[108, 830], [108, 900], [108, 960]],
@@ -188,13 +189,13 @@ const route = {
     zigzag: { p: [477, 700], heading: -90 },
     turn: { p: [428, 150], heading: -90 },
     figure8: { p: [350, 112], heading: 140 },
-    hill: { p: [272, 61.5], heading: 180 },
+    hill: { p: [285, 61.5], heading: 180 },
   },
   // One-way sections (course direction arrows)
   oneWay: [
     { poly: [[70, 560], [130, 560], [130, 1010], [70, 1010]], dir: SOUTH, name: 'მარცხენა გზა' },
     { poly: [[436, 600], [493, 600], [493, 1000], [436, 1000]], dir: NORTH, name: 'მარჯვენა გზა' },
-    { poly: [[124, 47], [221, 47], [221, 76], [124, 76]], dir: WEST, name: 'აღმართის ზოლი' },
+    { poly: [[124, 47], [262, 47], [262, 76], [124, 76]], dir: WEST, name: 'აღმართის ზოლი' },
   ],
 };
 
@@ -207,8 +208,8 @@ const signsPx = [
   { at: [519, 470], face: SOUTH, type: 'info', element: 'zigzag', sub: 'ზიგზაგი' },
   { at: [521, 100], face: SOUTH, type: 'info', element: 'turn', sub: 'ჩიხი' },
   { at: [236, 150], face: EAST, type: 'info', element: 'figure8', sub: 'რვიანი' },
-  { at: [262, 42], face: EAST, type: 'info', element: 'hill', sub: 'აღმართი' },
-  { at: [244, 42], face: EAST, type: 'steep', text: '16%' },
+  { at: [294, 42], face: EAST, type: 'info', element: 'hill', sub: 'აღმართი' },
+  { at: [276, 42], face: EAST, type: 'steep', text: '16%' },
 ];
 
 // Deterministic tree positions on lawns (map px)

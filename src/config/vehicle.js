@@ -73,7 +73,10 @@ export const VEHICLE = {
   // x/y keep the whole glass visible from EYE through the side window: behind the A-pillar base
   // and above the dashboard / door sill (at x 2.02, y 1.02 the pillar and dash hid most of it).
   MIRRORS: {
-    left:  { x: 1.75, y: 1.06, z: -1.00, yaw: 17, pitch: 4, fov: 24, w: 0.21, h: 0.13 },
+    left:  { x: 1.75, y: 1.06, z: -1.00, yaw: 17, pitch: 4, fov: 24, w: 0.21, h: 0.13,
+             // In R: same outer edge (poles far behind enter the mirror as before), but it reaches further in and
+             // down (slightly squeezed, like a convex mirror) so the rear left tyre on the line is visible.
+             reverse: { yaw: 13.5, pitch: 16.5, fov: 35, hfov: 45 } },
     right: { x: 1.75, y: 1.06, z:  1.00, yaw: 19, pitch: 6, fov: 26, w: 0.21, h: 0.13,
              reverseDipDeg: 6 },  // right mirror tilts down in R (common kerb-view feature)
     rear:  { x: 1.78, y: 1.33, z: -0.06, w: 0.24, h: 0.07, fov: 16 },

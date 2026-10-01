@@ -39,11 +39,12 @@ export class Mirrors {
     const m = new THREE.Matrix4().lookAt(pos, pos.clone().add(dir), new THREE.Vector3(0, 1, 0));
     cam.position.copy(pos);
     cam.quaternion.setFromRotationMatrix(m);
+    if (cam.fov !== def.fov || cam.aspect !== def.aspect) { cam.fov = def.fov; cam.aspect = def.aspect; cam.updateProjectionMatrix(); }
   }
 
   render(scene, vehicle) {
     const rev = vehicle.gear === 'R';
-    if (rev !== this.reverse) { this.reverse = rev; this.pose('right', rev); }
+    if (rev !== this.reverse) { this.reverse = rev; this.pose('right', rev); this.pose('left', rev); }
     const r = this.renderer;
     const prev = r.getRenderTarget();
     for (const w of ['left', 'right', 'rear']) {

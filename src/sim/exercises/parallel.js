@@ -163,6 +163,7 @@ export function createCoach(env) {
   const finalRA = (g) => g.a0 + rearGapTarget + P.REAR_OVERHANG;
   const finalB = (g) => -g.W / 2 + 0.05;
   const theta = 45 * DEG;
+  const DOT = 36 * DEG;                              // turn at which the 3rd pole is well inside the left mirror (reverse view)
   const MARGIN = 0.12;                               // "fits": whole body this far inside the lines
   let step = 'approach', t0 = 0, g = null;
 
@@ -226,7 +227,7 @@ export function createCoach(env) {
           if (done && still) { go('center1'); break; }
           return { step, title: 'შედით ადგილზე', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა სარკეში ბორდიურის მხარის მესამე (უკანა) ჯოხი გამოჩნდება.',
             readout: seen ? 'ჯოხი სარკეშია — გაჩერდით' : `კუთხე ${r.toFixed(0)}°`, gear: 'R', steer: 1, speed: clamp((45 - r) * 0.06, 0.12, 0.7), stop: done,
-            sticker: { id: 'par-3rd', target: kerbRear, pose: poseAt(g, tA - R * Math.sin(theta), laneNow + R * (1 - Math.cos(theta)), -theta), views: ['left'] }, focus: kerbRear };
+            sticker: { id: 'par-3rd', target: kerbRear, pose: poseAt(g, tA - R * Math.sin(DOT), laneNow + R * (1 - Math.cos(DOT)), -DOT), views: ['left'] }, focus: kerbRear };
         }
         case 'center1':
           // ±25° of steering wheel: a keyboard tap moves it 20–40°; left uncorrected the car still parks cleanly

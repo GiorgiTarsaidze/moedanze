@@ -21,10 +21,13 @@ export function mirrorCamera(which, opts = {}, P = VEHICLE) {
     return { pos: { a: -0.35, y: 1.28, b: 0 }, dir: normalize3({ a: -1, y: -0.06, b: 0 }), fov: m.fov, aspect: m.w / m.h };
   }
   const side = which === 'left' ? -1 : 1;
-  const pitch = (m.pitch + (opts.reverse && m.reverseDipDeg ? m.reverseDipDeg : 0)) * DEG;
-  const yaw = m.yaw * DEG;
+  const r = opts.reverse ? m.reverse : null;        // own view while reversing (left mirror)
+  const pitch = (r ? r.pitch : m.pitch + (opts.reverse && m.reverseDipDeg ? m.reverseDipDeg : 0)) * DEG;
+  const yaw = (r ? r.yaw : m.yaw) * DEG;
   const dir = normalize3({ a: -Math.cos(yaw) * Math.cos(pitch), y: -Math.sin(pitch), b: side * Math.sin(yaw) * Math.cos(pitch) });
-  return { pos: { a: m.x - 0.01, y: m.y, b: side * (P.MIRROR_WIDTH / 2 - 0.1) }, dir, fov: m.fov, aspect: m.w / m.h };
+  const fov = r ? r.fov : m.fov, aspect = r ? Math.tan(r.hfov * DEG / 2) / Math.tan(r.fov * DEG / 2) : m.w / m.h;
+  // eye point near the outer part of the glass (inside the housing): sees past the flank into the rear wheel arch
+  return { pos: { a: m.x - 0.01, y: m.y, b: side * (P.MIRROR_WIDTH / 2 - 0.02) }, dir, fov, aspect };
 }
 
 // Project a car-local 3D point into a camera. Returns u,v in [0,1] (camera image, not mirrored),
