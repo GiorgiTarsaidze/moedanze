@@ -141,10 +141,10 @@ export function createCoach(env) {
         case 'approach': {
           const hit = env.aligned(stopDot);
           if ((d < 0.15 || hit) && still) { go(d < -0.35 && !hit ? 'backUp' : 'toReverse'); break; }
-          const hint = gap < GAP_MIN ? 'ძალიან ახლოს ხართ გარაჟთან — გადაიწიეთ მარცხნივ, შესასვლელის ხაზამდე დაახლოებით 2.4 მ.'
-            : gap > GAP_MAX ? 'ძალიან შორს ხართ — მიუახლოვდით გარაჟს, შესასვლელის ხაზამდე დაახლოებით 2.4 მ.' : '';
-          return { step, title: 'მიუახლოვდით გარაჟს', text: 'გაიარეთ გარაჟის გასწვრივ, შესასვლელის ხაზიდან დაახლოებით 2.4 მ-ში (მოჩვენებითი მანქანა). გაჩერდით, როცა შესასვლელის შორეული ჯოხი მარჯვენა უკანა ფანჯრის უკანა კიდესთან (ყვითელ წერტილთან) მოვა.',
-            hint, readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : d < 12 ? `გაჩერების წერტილამდე ${Math.max(0, d).toFixed(1)} მ · ხაზამდე ${gap.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneB },
+          const hint = gap < GAP_MIN ? 'გარაჟთან ძალიან ახლოს ხართ, გადაიწიეთ მარცხნივ, შესასვლელის ხაზამდე დაახლოებით 2.4 მ'
+            : gap > GAP_MAX ? 'ძალიან შორს ხართ, მიუახლოვდით გარაჟს, შესასვლელის ხაზამდე დაახლოებით 2.4 მ' : '';
+          return { step, title: 'მიუახლოვდით გარაჟს', text: 'გაიარეთ გარაჟის გასწვრივ, შესასვლელის ხაზიდან დაახლოებით 2.4 მ-ში. გაჩერდით, როცა შესასვლელის შორეული ჯოხი მარჯვენა უკანა ფანჯრის უკანა კიდესთან (ყვითელ წერტილთან) მივა',
+            hint, readout: hit ? 'ყვითელი ნიშანი დაემთხვა! გაჩერდით' : d < 12 ? `გაჩერების წერტილამდე ${Math.max(0, d).toFixed(1)} მ · ხაზამდე ${gap.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneB },
             speed: clamp(d * 0.8, 0, 2.0), stop: d < 0.15 || hit, ghost: { frame: f, a: stopA, b: laneB, rel: 0 },
             sticker: stopDot, focus: farPost };
         }
@@ -153,55 +153,55 @@ export function createCoach(env) {
         {
           const hit = env.aligned(stopDot);
           if ((d > -0.15 || hit) && still) { go('lockRight'); break; }
-          return { step, title: 'გადასცდით გაჩერების წერტილს', text: 'ჩართეთ R და საჭე სწორად ნელა იმოძრავეთ უკან, სანამ შორეული ჯოხი ყვითელ წერტილს არ დაემთხვევა. შემდეგ გაჩერდით.',
-            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `${Math.max(0, -d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(-d * 0.8, 0.12, 0.6), stop: d > -0.15 || hit,
+          return { step, title: 'გადასცდით გაჩერების წერტილს', text: 'ჩართეთ R, საჭე სწორად, ნელა იმოძრავეთ უკან, სანამ შორეული ჯოხი ყვითელ წერტილს არ დაემთხვევა. შემდეგ გაჩერდით',
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა! გაჩერდით' : `${Math.max(0, -d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(-d * 0.8, 0.12, 0.6), stop: d > -0.15 || hit,
             sticker: stopDot, focus: farPost };
         }
         case 'toReverse':
           if (veh.gear === 'R') { go('lockRight'); break; }
-          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R.', gear: 'R', stop: true, sticker: stopDot, focus: farPost };
+          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R', gear: 'R', stop: true, sticker: stopDot, focus: farPost };
         case 'lockRight':
           if (veh.steerWheel >= V.D.MAX_STEERING_WHEEL_ANGLE * 0.98) { arcStart = ra; go('arc'); break; }
-          return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'დაძვრამდე მოაბრუნეთ საჭე ბოლომდე მარჯვნივ.', gear: 'R', steer: 1, stop: true };
+          return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'დაძვრამდე მოაბრუნეთ საჭე ბოლომდე მარჯვნივ', gear: 'R', steer: 1, stop: true };
         case 'arc': {
           const r = -rel / DEG;
           const s = arcStart || ra;                  // the full-lock arc ends R back and R into the box
           const straight = { id: 'gar-straight', target: toWorld(f, -g.W / 2, g.LEN), pose: pose(s.a - R, s.b + R, -Math.PI / 2), views: ['left', 'right'] };
           const hit = env.aligned(straight);
           if ((r >= 89.3 || hit) && still) { go('center'); break; }
-          return { step, title: 'შედით გარაჟში', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ, სანამ ორივე სარკეში არ დაინახავთ, რომ მანქანა გარაჟში სწორად ჯდება (ხაზები მანქანის პარალელურია).',
-            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `კუთხე ${r.toFixed(0)}° / 90°`, gear: 'R', steer: 1, speed: clamp((90 - r) * 0.03, 0.1, 0.7), stop: r >= 89.3 || hit,
+          return { step, title: 'შედით გარაჟში', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ, სანამ ორივე სარკეში არ დაინახავთ, რომ მანქანა გარაჟში სწორად ჯდება (ხაზები მანქანის პარალელურია)',
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა! გაჩერდით' : `კუთხე ${r.toFixed(0)}° / 90°`, gear: 'R', steer: 1, speed: clamp((90 - r) * 0.03, 0.1, 0.7), stop: r >= 89.3 || hit,
             sticker: straight };
         }
         case 'center':
           // ±25° of steering wheel: a keyboard tap moves it 20–40°; left uncorrected the car still parks cleanly
           if (Math.abs(veh.steerWheel) < 0.44) { go('reverseIn'); break; }
-          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში.', gear: 'R', steer: 0, stop: true,
+          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში', gear: 'R', steer: 0, stop: true,
             readout: `საჭე: ${Math.abs(veh.steerWheel / DEG).toFixed(0)}° ${veh.steerWheel > 0 ? 'მარჯვნივ' : 'მარცხნივ'}` };
         case 'reverseIn': {
           const mb = toLocal(f, veh.mirrorPoints()[0]).b, pb = toLocal(f, second).b;
           const d = pb - mb;                         // left mirror still this far before the second pole
           const lat = ra.a;                          // lateral offset in the box
           if (d < 0.05 && still) { go('stopped'); break; }
-          return { step, title: 'შედით ბოლომდე', text: 'იმოძრავეთ უკუსვლით პირდაპირ. გაჩერდით, როცა მარცხენა ფანჯარაში დაინახავთ, რომ მარცხენა სარკემ მეორე ჯოხს გადაუარა. თუ სარკეში ჩანს, რომ ერთ მხარეს მიიწევთ, ნაზად გაასწორეთ.',
+          return { step, title: 'შედით ბოლომდე', text: 'იმოძრავეთ უკუსვლით პირდაპირ. გაჩერდით, როცა მარცხენა ფანჯარაში დაინახავთ, რომ მარცხენა სარკემ მეორე ჯოხს გაასწრო. თუ სარკეში ჩანს, რომ ერთ მხარეს მიიწევთ, ნაზად გაასწორეთ',
             readout: `სარკე მეორე ჯოხამდე ${Math.max(0, d).toFixed(2)} მ`, gear: 'R', steer: clamp(-lat * 1.2 + wrapAngle(rel + Math.PI / 2) * 2.0, -0.4, 0.4), speed: clamp(d * 0.6, 0.1, 0.6), stop: d < 0.05,
             focus: second };
         }
         case 'stopped':
           if (time - t0 > 1.5) { go('exitPrep'); break; }
-          return { step, title: 'გაჩერდით გარაჟში', text: 'გაჩერდით. გასვლამდე მთელი მანქანა გარაჟის შიგნით უნდა იყოს.', stop: true, steer: 0 };
+          return { step, title: 'გაჩერდით გარაჟში', text: 'გაჩერდით. გასვლამდე მთელი მანქანა გარაჟის შიგნით უნდა იყოს', stop: true, steer: 0 };
         case 'exitPrep':
           if (veh.gear === 'D') { go('exit'); break; }
-          return { step, title: 'გამოდით გარაჟიდან', text: 'ჩართეთ D (F).', gear: 'D', stop: true };
+          return { step, title: 'გამოდით გარაჟიდან', text: 'ჩართეთ D (F ღილაკზე)', gear: 'D', stop: true };
         case 'exit': {
           const rbb = toLocal(f, veh.rearBumper()).b;  // rear bumper depth in the box
           if (rbb < -0.6) { go('turnOut'); break; }
-          return { step, title: 'გამოსვლა', text: 'გამოდით გარაჟიდან პირდაპირ.', gear: 'D', steer: 0, speed: 1.0 };
+          return { step, title: 'გამოსვლა', text: 'გამოდით გარაჟიდან', gear: 'D', steer: 0, speed: 1.0 };
         }
         case 'turnOut': {
           if (ev.status !== 'active' && Math.abs(rel) < 0.3) { go('done'); break; }
           if (Math.abs(rel) > 0.25) return { step, title: 'მოუხვიეთ მარჯვნივ', text: 'მოუხვიეთ მარჯვნივ და გააგრძელეთ გზა.', gear: 'D', steer: 1, speed: 1.0 };
-          return { step, title: 'გააგრძელეთ', text: 'გააგრძელეთ გზა.', gear: 'D', track: { frame: f, b: laneB }, speed: 1.2 };
+          return { step, title: 'გააგრძელეთ', text: 'გააგრძელეთ გზა', gear: 'D', track: { frame: f, b: laneB }, speed: 1.2 };
         }
         default: return null;
       }

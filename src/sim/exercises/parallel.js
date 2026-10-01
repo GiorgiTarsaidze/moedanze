@@ -200,8 +200,8 @@ export function createCoach(env) {
           const hit = env.aligned(turnDot);
           if ((d > -0.15 || hit) && still) { go(d > 0.35 && !hit ? 'backUp' : 'toReverse'); break; }
           return { step, title: 'მიუახლოვდით პარკირების ადგილს',
-            text: 'გაიარეთ ადგილის გასწვრივ, ხაზიდან დაახლოებით 0.7–1 მ-ში. გაჩერდით, როცა ადგილის შიდა (ბორდიურის მხარის) წინა ჯოხი მარჯვენა უკანა ფანჯარაში გამოჩნდება — ყვითელ წერტილთან.',
-            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `მობრუნების წერტილამდე ${Math.max(0, -d).toFixed(1)} მ`, gear: 'D',
+            text: 'გაიარეთ პარკირების ადგილის გასწვრივ. გაჩერდით, როცა ადგილის შიდა წინა ჯოხი მარჯვენა უკანა ფანჯარაში გამოჩნდება, ყვითელ წერტილთან',
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა! გაჩერდით' : `მობრუნების წერტილამდე ${Math.max(0, -d).toFixed(1)} მ`, gear: 'D',
             track: { frame: f, b: laneB(g) }, speed: clamp(-d * 0.9, 0, 2.2), stop: d > -0.15 || hit,
             ghost: ghost(g, tA, laneB(g)),                 // ghost car = rear axle at the turning point
             sticker: turnDot, focus: kerbFront };
@@ -209,73 +209,73 @@ export function createCoach(env) {
         case 'backUp': {
           const hit = env.aligned(turnDot);
           if ((d <= 0.15 || hit) && still) { go('lockRight'); break; }
-          return { step, title: 'გადასცდით მობრუნების წერტილს', text: 'ჩართეთ R და საჭე სწორად ნელა იმოძრავეთ უკან, სანამ შიდა წინა ჯოხი მარჯვენა უკანა ფანჯარაში (ყვითელ წერტილთან) არ მოვა.',
-            readout: hit ? 'ყვითელი ნიშანი დაემთხვა — გაჩერდით' : `${Math.max(0, d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(d * 0.8, 0.12, 0.8), stop: d <= 0.15 || hit,
+          return { step, title: 'გადასცდით მობრუნების წერტილს', text: 'ჩართეთ R, გაასწორეთ საჭე, იმოძრავეთ უკან, სანამ შიდა წინა ჯოხი მარჯვენა უკანა ფანჯარაში არ მივა ყვითელ წერტილთან',
+            readout: hit ? 'ყვითელი ნიშანი დაემთხვა! გაჩერდით' : `${Math.max(0, d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(d * 0.8, 0.12, 0.8), stop: d <= 0.15 || hit,
             sticker: turnDot, focus: kerbFront };
         }
         case 'toReverse':
           if (veh.gear === 'R') { go('lockRight'); break; }
-          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R.', gear: 'R', stop: true, sticker: turnDot, focus: kerbFront };
+          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R', gear: 'R', stop: true, sticker: turnDot, focus: kerbFront };
         case 'lockRight':
           if (veh.steerWheel >= MAXS) { go('arcRight'); break; }
-          return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'მოაბრუნეთ საჭე ბოლომდე მარჯვნივ (მანქანა დგას).', gear: 'R', steer: 1, stop: true };
+          return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'მოაბრუნეთ საჭე ბოლომდე მარჯვნივ', gear: 'R', steer: 1, stop: true };
         case 'arcRight': {
           const pl3 = { ...worldToLocal({ x: veh.x, z: veh.z, heading: veh.heading }, pole3), y: 0.6 }, pr = projectLocal(mirrorCamera('left'), pl3);
           const seen = pr.inside && 1 - pr.u < 0.96 && !hiddenByCar('left', pl3);   // really visible: not behind our own car
           const third = { id: 'par-3rd', target: pole3, pose: poseAt(g, tA - R * Math.sin(DOT), laneNow + R * (1 - Math.cos(DOT)), -DOT), views: ['left'] };
           const done = seen || env.aligned(third) || r >= 52;
           if (done && still) { go('center1'); break; }
-          return { step, title: 'შედით ადგილზე', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა სარკეში მესამე ჯოხი (ბორდიურის მხარის უკანა ჯოხი) გამოჩნდება.',
-            readout: done ? 'ჯოხი სარკეშია — გაჩერდით' : `კუთხე ${r.toFixed(0)}°`, gear: 'R', steer: 1, speed: clamp((45 - r) * 0.06, 0.12, 0.7), stop: done,
+          return { step, title: 'შედით ადგილზე', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა სარკეში მესამე ჯოხი გამოჩნდება',
+            readout: done ? 'ჯოხი სარკეში გამოჩნდა, გაჩერდით' : `კუთხე ${r.toFixed(0)}°`, gear: 'R', steer: 1, speed: clamp((45 - r) * 0.06, 0.12, 0.7), stop: done,
             sticker: third, focus: pole3 };
         }
         case 'center1':
           // ±25° of steering wheel: a keyboard tap moves it 20–40°; left uncorrected the car still parks cleanly
           if (Math.abs(veh.steerWheel) < 0.44) { go('reverseToLine'); break; }
-          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში.', gear: 'R', steer: 0, stop: true,
+          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში', gear: 'R', steer: 0, stop: true,
             readout: `საჭე: ${Math.abs(veh.steerWheel / DEG).toFixed(0)}° ${veh.steerWheel > 0 ? 'მარჯვნივ' : 'მარცხნივ'}` };
         case 'reverseToLine': {
           const toLine = -g.W - lw.b;                     // > 0: left rear wheel still outside the bay line
           if (toLine <= 0.05 && still) { go('lockLeft'); break; }
-          return { step, title: 'უკუსვლა პირდაპირ', text: 'იმოძრავეთ უკუსვლით პირდაპირ, სანამ მარცხენა უკანა საბურავი ადგილის ხაზზე არ დადგება.',
+          return { step, title: 'უკუსვლა', text: 'იმოძრავეთ უკუსვლით პირდაპირ, სანამ მარცხენა უკანა საბურავი ხაზზე არ დადგება, შეხედეთ მარცხენა სარკეს',
             readout: `საბურავი ხაზამდე ${Math.max(0, toLine).toFixed(2)} მ`, gear: 'R', steer: 0,
             speed: clamp(toLine * 1.2, 0.12, 0.7), stop: toLine <= 0.05, highlight: [g.lines[2]] };
         }
         case 'lockLeft':
           if (veh.steerWheel <= -MAXS) { go('arcLeft'); break; }
-          return { step, title: 'საჭე ბოლომდე მარცხნივ', text: 'მოაბრუნეთ საჭე ბოლომდე მარცხნივ.', gear: 'R', steer: -1, stop: true };
+          return { step, title: 'საჭე ბოლომდე მარცხნივ', text: 'მოაბრუნეთ საჭე ბოლომდე მარცხნივ', gear: 'R', steer: -1, stop: true };
         case 'arcLeft':
           if (r <= 1.5 && still) { go('center2'); break; }
-          return { step, title: 'გასწორდით ბორდიურის პარალელურად', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარცხნივ, სანამ მანქანა ბორდიურის პარალელური არ გახდება.',
+          return { step, title: 'გასწორდით ბორდიურის პარალელურად', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარცხნივ, სანამ მანქანა ბორდიურის პარალელური არ გახდება',
             readout: `კუთხე ${Math.max(0, r).toFixed(1)}°`, gear: 'R', steer: -1, speed: clamp(r * 0.05, 0.1, 0.6), stop: r <= 1.5 };
         case 'center2':
           if (Math.abs(veh.steerWheel) < 0.44) { go('adjust'); break; }
-          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში.', gear: veh.gear, steer: 0, stop: true,
+          return { step, title: 'გაასწორეთ საჭე', text: 'დააბრუნეთ საჭე შუა მდგომარეობაში', gear: veh.gear, steer: 0, stop: true,
             readout: `საჭე: ${Math.abs(veh.steerWheel / DEG).toFixed(0)}° ${veh.steerWheel > 0 ? 'მარჯვნივ' : 'მარცხნივ'}` };
         case 'adjust': {
           // only if the car does not fit yet: move until the whole body is inside the lines
           if (fits && still) { go('handbrake'); break; }
-          if (fits) return { step, title: 'გაჩერდით', text: 'მანქანა ადგილზეა — გაჩერდით.', stop: true, steer: 0 };
+          if (fits) return { step, title: 'გაჩერდით', text: 'მანქანა ადგილზეა, გაჩერდით', stop: true, steer: 0 };
           const back = frontOut > 0;
-          return { step, title: 'დადექით ადგილზე', text: back ? 'წინა ნაწილი ჯერ ადგილის გარეთაა — ცოტა იმოძრავეთ უკუსვლით, საჭე სწორად.' : 'უკანა ნაწილი ხაზს სცდება — ცოტა წაიწიეთ წინ, საჭე სწორად.',
+          return { step, title: 'დადექით ადგილზე', text: back ? 'წინა ნაწილი ჯერ ადგილის გარეთაა, იმოძრავეთ ოდნავ უკუსვლით, საჭე გაასწორეთ' : 'უკანა ნაწილი ხაზს სცდება, ცოტა წაიწიეთ წინ, გაასწორეთ საჭე',
             readout: `${Math.max(frontOut, rearOut).toFixed(2)} მ`, gear: back ? 'R' : 'D', steer: 0, speed: clamp(Math.max(frontOut, rearOut) + 0.1, 0.1, 0.4) };
         }
         case 'handbrake':
           if (veh.parkingBrake && time - t0 > 1.5) { go('exitPrep'); break; }
-          return { step, title: 'სადგომი მუხრუჭი', text: 'ბოლომდე გაჩერდით და ჩართეთ სადგომი მუხრუჭი (Space).', stop: true, handbrake: true };
+          return { step, title: 'სადგომი მუხრუჭი', text: 'ბოლომდე გაჩერდით და ჩართეთ სადგომი მუხრუჭი (Space)', stop: true, handbrake: true };
         case 'exitPrep':
           if (veh.gear === 'D' && !veh.parkingBrake) { go('lockExit'); break; }
-          return { step, title: 'მოემზადეთ გასასვლელად', text: 'ჩართეთ D (F) და მოხსენით სადგომი მუხრუჭი (Space).', stop: true,
+          return { step, title: 'მოემზადეთ გასასვლელად', text: 'ჩართეთ D (F) და მოხსენით სადგომი მუხრუჭი (Space)', stop: true,
             gear: 'D', handbrake: false };
         case 'lockExit':
           if (veh.steerWheel <= -MAXS) { go('exitArc'); break; }
-          return { step, title: 'საჭე ბოლომდე მარცხნივ', text: 'დაძვრამდე მოაბრუნეთ საჭე ბოლომდე მარცხნივ.', gear: 'D', steer: -1, stop: true };
+          return { step, title: 'საჭე ბოლომდე მარცხნივ', text: 'დაძვრამდე მოაბრუნეთ საჭე ბოლომდე მარცხნივ', gear: 'D', steer: -1, stop: true };
         case 'exitArc':
           if (r >= 28) { go('exitStraight'); break; }        // nose 28° out towards the road
-          return { step, title: 'გამოდით ადგილიდან', text: 'ნელა დაიძარით, საჭე ბოლომდე მარცხნივ.', gear: 'D', steer: -1, speed: 0.8 };
+          return { step, title: 'გამოდით ადგილიდან', text: 'ნელა დაიძარით, საჭე ბოლომდე მარცხნივ', gear: 'D', steer: -1, speed: 0.8 };
         case 'exitStraight': {
           if (ev.status !== 'active') { go('done'); break; }
-          return { step, title: 'ჩადექით ზოლში', text: 'გაასწორეთ საჭე და გააგრძელეთ გზა.', gear: 'D',
+          return { step, title: 'ჩადექით ზოლში', text: 'გაასწორეთ საჭე და გააგრძელეთ გზა', gear: 'D',
             track: { frame: f, b: laneB(g) - 0.4, lookahead: 5 }, speed: 1.2 };
         }
         default:

@@ -53,11 +53,11 @@ export class UI {
     const tl = this.sim.rules.elementTimeLimitSec;
     const elapsed = cur && cur.status === 'active' ? cur.elapsed : 0;
     let title;
-    if (ex.state === 'finishing') title = 'დაბრუნდით ფინიშზე';
+    if (ex.state === 'finishing') title = 'გაიარეთ მარშრტუის ბოლომდე';
     else if (ex.state === 'finished') title = 'დასრულდა';
     else title = `${ex.numberOf(id)}. ${rules.nameKa}`;
     const score = mode === 'training' ? `<span class="score">${ex.score} / 100</span>` : '<span>გამოცდა</span>';
-    const timer = cur?.status === 'active' ? `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')} / ${tl / 60}:00` : (cur ? 'მიახლოება' : '');
+    const timer = cur?.status === 'active' ? `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')} / ${tl / 60}:00` : (cur ? 'უახლოვდები' : '');
     const html = `<div class="el">${esc(title)}</div><div class="row">${score}<span>${timer}</span></div><div class="steps">${steps}</div>`;
     if (html !== this.lastStatus) { this.status.innerHTML = html; this.lastStatus = html; }
   }
@@ -130,11 +130,11 @@ export class UI {
   showResult(res) {
     const el = $('#result');
     const verdict = res.passed ? 'ჩაბარდა' : 'ვერ ჩაბარდა';
-    const official = res.restartsUsed ? `<div class="unofficial">არაოფიციალური შედეგი: გამოყენებულია თავიდან დაწყება ან საკონტროლო წერტილი (${res.restartsUsed}).</div>` : '';
-    const modeNote = res.mode === 'training' ? '<div class="unofficial">სავარჯიშო გავლა — ნამდვილ გამოცდაზე დისკვალიფიკაცია გამოცდას მაშინვე ასრულებს.</div>' : '';
+    const official = res.restartsUsed ? `<div class="unofficial">შედეგი: გამოყენებულია 'თავიდან დაწყება' ან 'საკონტროლო წერტილი' (${res.restartsUsed}).</div>` : '';
+    const modeNote = res.mode === 'training' ? '<div class="unofficial">სავარჯიშო გავლა — ნამდვილ გამოცდაზე უხეში შეცდომია დროს მაშინვე იჭრებით</div>' : '';
     el.querySelector('.res-head').innerHTML = `<div class="verdict ${res.passed ? 'pass' : 'fail'}">${verdict}</div>
       <div class="meta"><div class="big">${res.score} / 100</div><div>${res.penalties} საჯარიმო ქულა · ლიმიტი ${res.maxPenalty} · ${Math.floor(res.time / 60)} წთ ${Math.floor(res.time % 60)} წმ</div>
-      <div class="why">${esc(res.reason || 'ექვსივე ელემენტი შესრულებულია ლიმიტის ფარგლებში.')}</div>${official}${modeNote}</div>`;
+      <div class="why">${esc(res.reason || 'ექვსივე ელემენტი შესრულებულია დროის ლიმიტის ფარგლებში')}</div>${official}${modeNote}</div>`;
     const item = (m) => `<li>${esc(m.ka || m.text)}${m.detail ? ` <span class="ka">(${esc(m.detail)})</span>` : ''}: <span class="p">${ptsLabel(m.points)}</span>${m.official ? '' : ' <span class="unofficial">სიმულატორის წესი</span>'}</li>`;
     const cards = res.elements.map((e) => {
       const list = e.mistakes.length

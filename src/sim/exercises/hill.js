@@ -34,8 +34,8 @@ export function buildStation(st, dims) {
     ramp: { frame, hw, a0: inc0, a1: dec1, profile },
     // side walls where the ramp is raised (solid)
     walls: [
-      { a: toWorld(frame, wallA0, -hw - 0.1), b: toWorld(frame, wallA1, -hw - 0.1), name: 'პანდუსის კიდე' },
-      { a: toWorld(frame, wallA0, hw + 0.1), b: toWorld(frame, wallA1, hw + 0.1), name: 'პანდუსის კიდე' },
+      { a: toWorld(frame, wallA0, -hw - 0.1), b: toWorld(frame, wallA1, -hw - 0.1), name: 'აღმართის კიდე' },
+      { a: toWorld(frame, wallA0, hw + 0.1), b: toWorld(frame, wallA1, hw + 0.1), name: 'აღმართის კიდე' },
     ],
     posts: [],
     lines: [],
@@ -133,22 +133,22 @@ export function createCoach(env) {
       switch (step) {
         case 'approach':
           if (d < 0.04 && still) { go('hold'); break; }
-          return { step, title: 'აღმართი: ასვლა', text: `ადით 16 %-იან აღმართზე და გაჩერდით ისე, რომ წინა ნაწილი სდექ-ხაზამდე დაახლოებით ${target} მ-ში იყოს (მინიმუმ 1 მ).`,
+          return { step, title: 'აღმართი', text: `ადით აღმართზე და გაჩერდით ისე, რომ წინა ნაწილი სდექ-ხაზამდე დაახლოებით ${target} მ-ში იყოს`,
             readout: `სდექ-ხაზამდე ${Math.max(0, -fb.a).toFixed(1)} მ`, gear: 'D', track: { frame: f, b: 0 }, speed: clamp(d * 0.6 + 0.15, 0, 1.6), stop: d < 0.04,
             ghost: { frame: f, a: -target - env.vehicle.P.WHEELBASE - env.vehicle.P.FRONT_OVERHANG, b: 0, rel: 0 }, highlight: [g.stopLine] };
         case 'hold':
           if (veh.parkingBrake && time - t0 > 1.6) { go('throttle'); break; }
-          return { step, title: 'დააკავეთ მანქანა', text: 'მუხრუჭი არ აუშვათ და ჩართეთ სადგომი მუხრუჭი (Space).', stop: true, handbrake: true,
+          return { step, title: 'დაამუხრუჭეთ', text: 'მუხრუჭი არ აუშვათ და ჩართეთ სადგომი მუხრუჭი (Space).', stop: true, handbrake: true,
             readout: `წინა ნაწილი ხაზიდან ${(-fb.a).toFixed(2)} მ-შია` };
         case 'throttle':
           if (veh.throttle > 0.5) { go('release'); break; }
-          return { step, title: 'მიეცით გაზი', text: 'აუშვით მუხრუჭის პედალი და დააჭირეთ აქსელერატორს (W) — მანქანას ჯერ სადგომი მუხრუჭი აკავებს.', throttle: 0.55, handbrake: true, gear: 'D' };
+          return { step, title: 'მიეცით გაზს', text: 'აუშვით მუხრუჭის პედალს და დააჭირეთ გაზის პედალს, მანქანა ჯერ კიდევ სადგომ მუხრუჭზე უნდა იყოს', throttle: 0.55, handbrake: true, gear: 'D' };
         case 'release':
           if (!veh.parkingBrake && veh.v > 0.3) { go('climb'); break; }
-          return { step, title: 'მოხსენით სადგომი მუხრუჭი', text: 'ახლა მოხსენით სადგომი მუხრუჭი (Space), აქსელერატორი არ აუშვათ.', throttle: 0.55, handbrake: false, gear: 'D' };
+          return { step, title: 'მოხსენით სადგომი მუხრუჭი', text: 'ახლა მოხსენით სადგომი მუხრუჭი (Space), გაზის პედალს არ აუშვათ', throttle: 0.55, handbrake: false, gear: 'D' };
         case 'climb':
           if (ev.status !== 'active') { go('done'); break; }
-          return { step, title: 'დაძვრა', text: 'გადაიარეთ აღმართის თავი და ნელა ჩაუშვით.', gear: 'D', track: { frame: f, b: 0 }, speed: 1.2 };
+          return { step, title: 'დაძვრა', text: 'გადაიარეთ აღმართი და ნელა დაეშვით ქვემოთ', gear: 'D', track: { frame: f, b: 0 }, speed: 1.2 };
         default: return null;
       }
       return this.update(veh, ev, time);

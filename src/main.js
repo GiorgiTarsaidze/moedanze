@@ -23,7 +23,7 @@ let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 } catch (e) {
-  document.body.innerHTML = '<div style="padding:24px;font:16px sans-serif;color:#fff">ამ ბრაუზერში WebGL მიუწვდომელია, ამიტომ 3D სიმულატორი ვერ ჩაირთვება.</div>';
+  document.body.innerHTML = '<div style="padding:24px;font:16px sans-serif;color:#fff">ამ ბრაუზერში WebGL მიუწვდომელია, ამიტომ 3D სიმულატორი ვერ ჩაირთვება</div>';
   throw e;
 }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -140,8 +140,8 @@ sim.exam.on((type, data) => {
     const n = sim.rules.elements[data.id].nameKa;
     if (data.status === 'completed') { ui.toast(`<b>${n}</b><br>დაბრკოლება შესრულებულია`, 'good', 3500); audio.success(); }
     else ui.toast(`<b>${n}</b><br>დაბრკოლება ვერ შესრულდა`, '', 5000);
-  } else if (type === 'allElementsDone') ui.toast('<b>ექვსივე დაბრკოლება შესრულებულია</b><br>დაბრუნდით სტარტზე მარცხენა გზაზე, გაჩერდით და ჩართეთ სადგომი მუხრუჭი.', 'info', 8000);
-  else if (type === 'checkpoint' && data.kind === 'after') ui.toast(`<b>საკონტროლო წერტილი შენახულია</b><br>${ui.cpLabel(data)}. აღსადგენად დააჭირეთ Esc-ს.`, 'info', 4000);
+  } else if (type === 'allElementsDone') ui.toast('<b>ექვსივე დაბრკოლება შესრულებულია</b><br>დაბრუნდით დასაწყისში, გაჩერდით და ჩართეთ სადგომი მუხრუჭი', 'info', 8000);
+  else if (type === 'checkpoint' && data.kind === 'after') ui.toast(`<b>საკონტროლო წერტილი შენახულია</b><br>${ui.cpLabel(data)}. თავიდან გასავლელად დააჭირეთ Esc-ს`, 'info', 4000);
   else if (type === 'engage' && sim.exam.mode === 'training') ui.toast(`<b>${sim.rules.elements[data.id].nameKa}</b> — ადგილი ${data.station}. დრო აითვლება (2:00).`, 'info', 3000);
   else if (type === 'finished') setTimeout(() => {
     if (!app.running || sim.exam.state !== 'finished') return;
@@ -166,7 +166,7 @@ function handleAction(a) {
   else if (a === 'hud') { app.hud = !app.hud; }
   else if (a === 'camera') app.ext = !app.ext;
   else if (a === 'minimap' && training) app.minimap = !app.minimap;
-  else if (a === 'demo' && training) { app.demo = !app.demo; ui.toast(app.demo ? '<b>მართავს ინსტრუქტორი</b><br>უყურეთ საჭეს, პედლებს და სარკეებს. მართვის დასაბრუნებლად დააჭირეთ G-ს ან ნებისმიერ სამართავ ღილაკს.' : 'ინსტრუქტორი გამოირთო — მართავთ თქვენ.', 'info', 4000); }
+  else if (a === 'demo' && training) { app.demo = !app.demo; ui.toast(app.demo ? '<b>მართავს ინსტრუქტორი</b><br>უყურეთ საჭეს, პედლებს და სარკეებს. მართვის კონტროლის დასაბრუნებლად დააჭირეთ G-ს' : 'ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 4000); }
 }
 
 // ------------------------------------------------------------------ loop
@@ -211,7 +211,7 @@ function frame(now) {
     let guidance = null;
     if (training || app.demo) guidance = sim.updateGuidance();
     const drivingKeys = input.keys.size > 0;
-    if (app.demo && drivingKeys) { app.demo = false; ui.toast('ინსტრუქტორი გამოირთო — მართავთ თქვენ.', 'info', 2500); }
+    if (app.demo && drivingKeys) { app.demo = false; ui.toast('ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 2500); }
     let vin;
     if (app.demo && guidance) { const a = guidance.ready ? guidance.readyAction : guidance; vin = demo.drive(a, 1 / 60); }
     else vin = input.vehicleInput(settings.selfCenter);

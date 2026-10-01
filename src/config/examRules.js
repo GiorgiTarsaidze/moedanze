@@ -38,17 +38,17 @@ export const examRules = {
       nameKa: 'პარალელური პარკირება', nameEn: 'Parallel parking',
       rules: {
         stopLineCrossed: { points: 10, official: true, note: '[S2] lists the requirement but the source omits the value — 10 assumed',
-          ka: 'ელემენტის წინ გაჩერებისას ავტომობილმა არ უნდა გადაკვეთოს „სდექ–ხაზი"', en: 'Crossed the stop line when stopping before the element' },
+          ka: 'ელემენტის წინ გაჩერებისას ავტომობილმა არ უნდა გადაკვეთოს სდექ-ხაზი', en: 'Crossed the stop line when stopping before the element' },
         markingOrPostInZone: { points: 10, official: true,
           ka: 'შემოსაზღვრულ უბანზე მოძრაობისას ავტომობილმა არ უნდა გადაკვეთოს მონიშვნები და არ უნდა დაეჯახოს ჯოხებს', en: 'Crossed a marking / hit a post or kerb while manoeuvring in the zone' },
         markingOrPostOnExit: { points: 15, official: true,
           ka: 'ელემენტიდან გამოსვლისას ავტომობილმა არ უნდა გადაკვეთოს მონიშვნები და არ უნდა დაეჯახოს ჯოხებს', en: 'Crossed a marking / hit a post while leaving the element' },
         notFullyInside: { points: 20, official: true,
-          ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოექცეს შემოსაზღვრულ უბანზე და არ კვეთავდეს მონიშვნის ხაზებს', en: 'Final position not entirely inside the parking space' },
+          ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოექცეს შემოსაზღვრულ უბანზე და არ კვეთდეს მონიშვნის ხაზებს', en: 'Final position not entirely inside the parking space' },
         noParkingBrake: { points: 15, official: true,
           ka: 'შემოსაზღვრულ უბანზე გაჩერების შემდეგ სავალდებულოა სადგომი მუხრუჭის გამოყენება', en: 'Parking brake not applied after stopping in the space' },
         excessiveCorrections: { points: 5, official: false, enabled: false, maxDirectionChanges: 4,
-          ka: 'ზედმეტად ბევრი წინ-უკან გასწორება', en: 'Too many forward/reverse corrections (simulator rule, disabled by default)' },
+          ka: 'ზედმეტად ბევრი მიმართულების (წინ/უკან) გასწორება', en: 'Too many forward/reverse corrections (simulator rule, disabled by default)' },
       },
     },
     zigzag: {
@@ -61,7 +61,7 @@ export const examRules = {
         markingOrPost: { points: 15, official: true,
           ka: 'არ უნდა გადაკვეთოს მონიშვნები და არ უნდა დაეჯახოს ჯოხებს', en: 'Crossed a boundary marking / hit a post' },
         stopped: { points: 10, official: true,
-          ka: '„ზიგზაგში" მოძრაობის განმავლობაში არ უნდა შეწყდეს მოძრაობა დასახული მიმართულებით', en: 'Stopped during the zigzag' },
+          ka: '"ზიგზაგში" მოძრაობის განმავლობაში არ უნდა შეწყდეს მოძრაობა დასახული მიმართულებით', en: 'Stopped during the zigzag' },
         engineOff: { points: 15, official: true, ka: 'არ უნდა გაითიშოს ძრავი', en: 'Engine switched off / stalled' },
         reversed: { points: 10, official: true, ka: 'ელემენტის შესრულებისას აკრძალულია უკუსვლით მოძრაობა', en: 'Reversed during the zigzag' },
       },
@@ -70,7 +70,7 @@ export const examRules = {
       nameKa: 'ჩიხი', nameEn: 'Limited-width turn (dead end)',
       rules: {
         wrongStart: { points: 15, official: true,
-          ka: 'ელემენტის შესრულება უნდა დაიწყოს მარჯვენა მხრიდან („სდექ–ხაზიდან")', en: 'Did not start from the right side (stop line)' },
+          ka: 'ელემენტის შესრულება უნდა დაიწყოს მარჯვენა მხრიდან', en: 'Did not start from the right side (stop line)' },
         tooManyGearChanges: { points: 15, official: true,
           ka: 'წინ და უკან მოძრაობა უნდა განხორციელდეს გადაცემის ერთჯერადი გადართვით', en: 'More than one reverse manoeuvre (gear change)' },
         markingOrPost: { points: 20, official: true,
@@ -85,10 +85,10 @@ export const examRules = {
     garage: {
       nameKa: 'უკუსვლით პარკირება (გარაჟი)', nameEn: 'Reverse parking (garage)',
       rules: {
-        rolled: { points: 10, official: true, ka: 'ავტომობილი არ უნდა დაგორდეს 30 სმ–ზე მეტ მანძილზე', en: 'Vehicle rolled more than 30 cm (against the selected direction)' },
+        rolled: { points: 10, official: true, ka: 'ავტომობილი არ უნდა დაგორდეს 30 სმ-ზე მეტ მანძილზე', en: 'Vehicle rolled more than 30 cm (against the selected direction)' },
         multipleReverse: { points: 15, official: true, ka: 'შესვლა უნდა განხორციელდეს უკუსვლის გადაცემის ერთჯერადი ჩართვით', en: 'Reverse gear engaged more than once (correction)' },
         notFullyInside: { points: 15, official: true,
-          ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოთავსდეს შემოსაზღვრულ უბანზე და არ უნდა კვეთავდეს მონიშვნის ხაზებს', en: 'Final position not entirely inside the box' },
+          ka: 'გაჩერების შემდეგ ავტომობილი მთლიანად უნდა მოთავსდეს შემოსაზღვრულ უბანზე და არ უნდა კვეთდეს მონიშნულ ხაზებს', en: 'Final position not entirely inside the box' },
         markingOrPost: { points: 20, official: true,
           ka: 'ელემენტის შესრულებისას ავტომობილმა არ უნდა გადაკვეთოს მონიშვნები და არ უნდა დაეჯახოს ჯოხებს', en: 'Crossed a marking / hit a post or kerb' },
       },
@@ -109,10 +109,10 @@ export const examRules = {
       nameKa: 'აღმართი', nameEn: 'Hill start',
       rules: {
         badStop: { points: 20, official: true,
-          ka: 'ავტომობილი უნდა გაჩერდეს „სდექ-ხაზამდე" არანაკლებ ერთი მეტრის დაშორებით', en: 'Did not stop at least 1 m before the stop line (or crossed it)' },
+          ka: 'ავტომობილი უნდა გაჩერდეს "სდექ-ხაზამდე" არანაკლებ ერთი მეტრის დაშორებით', en: 'Did not stop at least 1 m before the stop line (or crossed it)' },
         rollback: { points: 10, official: true,
-          ka: '„სდექ-ხაზიდან" დაძვრისას ავტომობილი არ უნდა დაგორდეს უკან 20 სმ-ზე მეტი მანძილით', en: 'Rolled back more than 20 cm when moving off' },
-        severeRollback: { points: 'FAIL', official: false, ka: 'უკან დაგორდა 1 მ-ზე მეტით (მანქანაზე კონტროლი დაიკარგა)', en: 'Rolled back more than 1 m (lost control of the vehicle)' },
+          ka: '"სდექ-ხაზიდან" დაძვრისას ავტომობილი არ უნდა დაგორდეს უკან 20 სმ-ზე მეტი მანძილით', en: 'Rolled back more than 20 cm when moving off' },
+        severeRollback: { points: 'FAIL', official: false, ka: 'უკან დაგორდა 1 მ-ზე მეტით', en: 'Rolled back more than 1 m (lost control of the vehicle)' },
       },
       rollbackLimit: 0.20,        // m [S2]
       severeRollbackLimit: 1.0,   // m (simulator assumption)

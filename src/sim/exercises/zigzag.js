@@ -117,14 +117,14 @@ export function createCoach(env) {
       const c = toLocal(g.frame, veh.center());
       const fb = toLocal(g.frame, veh.frontBumper());
       if (ev.status === 'waiting') {
-        return { step: 'approach', title: 'ზიგზაგი: მიახლოება', text: 'შედით ზოლის მარჯვენა ნახევარში. როგორც ისარი გიჩვენებთ, პირველ ჯოხს შემოუარეთ მარცხენა მხრიდან, შემდეგ იმოძრავეთ ჯოხებს შორის ზიგზაგით.',
+        return { step: 'approach', title: 'ზიგზაგი: ვუახლოვდებით დაბრკოლებას', text: 'შედით ზოლის მარჯვენა ნახევარში. როგორც ისარი გიჩვენებთ, პირველ ჯოხს შემოუარეთ მარცხენა მხრიდან, შემდეგ იმოძრავეთ ჯოხებს შორის ზიგზაგით',
           readout: fb.a < 0 ? `სდექ-ხაზამდე ${(-fb.a).toFixed(1)} მ` : '', gear: 'D', path, speed: 1.6, showPath: true };
       }
       const next = g.postsA.find((a) => a > c.a);
       const idx = g.postsA.indexOf(next);
       const side = idx < 0 ? '' : (idx % 2 === 0 ? 'LEFT' : 'RIGHT');
-      const steerHint = idx < 0 ? 'გაასწორეთ საჭე და გააგრძელეთ.' : `შემდეგი: ჯოხი ${idx + 1} — დატოვეთ ${side === 'LEFT' ? 'მარჯვნივ' : 'მარცხნივ'} (შემოუარეთ ${side === 'LEFT' ? 'მარცხენა' : 'მარჯვენა'} მხრიდან).`;
-      return { step: 'weave', title: 'ზიგზაგი', text: 'იმოძრავეთ შეუჩერებლად — არ გაჩერდეთ და არ ჩართოთ უკუსვლა. საჭე დროულად მოაბრუნეთ: უკანა საბურავები ჯოხებს უფრო ახლოს უვლის.',
+      const steerHint = idx < 0 ? 'გაასწორეთ საჭე და გააგრძელეთ' : `შემდეგი: ჯოხი ${idx + 1} — დატოვეთ ${side === 'LEFT' ? 'მარჯვნივ' : 'მარცხნივ'} (შემოუარეთ ${side === 'LEFT' ? 'მარცხენა' : 'მარჯვენა'} მხრიდან).`;
+      return { step: 'weave', title: 'ზიგზაგი', text: 'იმოძრავეთ შეუჩერებლად, არ გაჩერდეთ და არ ჩართოთ უკუსვლა. საჭე დროულად მოაბრუნეთ. ეცადეთ საჭის მობრუნება დაიწყოთ მაშინვე, როდესაც მანქანის ცხვირი ჯოხებს შორის შევა',
         hint: steerHint, gear: 'D', path, speed: 1.5, showPath: true, focus: idx >= 0 ? g.posts[idx].p : null };
     },
   };

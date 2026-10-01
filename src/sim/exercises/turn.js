@@ -161,45 +161,45 @@ export function createCoach(env) {
           const d = aTurn - ra.a, second = { id: 'turn-2nd', target: post2, pose: pose(aTurn, Math.round(ra.b * 20) / 20), views: [] };
           if (d <= 0) { go('turnLeft'); break; }
           const hit = env.aligned(second);            // green ~0.15 m before the point: the hint already says "now"
-          return { step, title: 'ჩიხი: შესვლა', text: 'შედით ჩიხში მარჯვენა ნახევრით, ნელა (≈3 კმ/სთ). სდექ-ხაზთან გაჩერება საჭირო არ არის, თუ ჩიხი თავისუფალია.',
+          return { step, title: 'ჩიხი: შესვლა', text: 'შედით ჩიხში მარჯვენა მხრიდან. სდექ-ხაზთან გაჩერება საჭირო არ არის, თუ ჩიხი თავისუფალია',
             hint: 'როცა მარჯვენა მხარის მეორე ჯოხი მარჯვენა წინა ფანჯარაში გამოჩნდება (ცხვირი ოდნავ გასცდება მას), გაუჩერებლად მოაბრუნეთ საჭე ბოლომდე მარცხნივ.',
-            readout: hit ? 'ახლავე — საჭე ბოლომდე მარცხნივ' : fb.a > -6 ? `მობრუნების წერტილამდე ${d.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneR },
+            readout: hit ? 'საჭე ბოლომდე მარცხნივ' : fb.a > -6 ? `მობრუნების წერტილამდე ${d.toFixed(1)} მ` : '', gear: 'D', track: { frame: f, b: laneR },
             speed: ra.a < -4 ? 1.4 : SLOW, highlight: g.lines.slice(0, 3), focus: post2,
             sticker: second };
         }
         case 'turnLeft':
           if (veh.steerWheel <= -MAXS) { go('forwardArc'); break; }
-          return { step, title: 'საჭე ბოლომდე მარცხნივ — გაუჩერებლად', text: 'ახლავე მოაბრუნეთ საჭე ბოლომდე მარცხნივ და ნელა განაგრძეთ მოძრაობა.',
+          return { step, title: 'საჭე ბოლომდე მარცხნივ, გაუჩერებლად', text: 'ახლავე მოაბრუნეთ საჭე ბოლომდე მარცხნივ და ნელა განაგრძეთ მოძრაობა',
             gear: 'D', steer: -1, speed: SLOW, focus: post2 };
         case 'forwardArc': {
           const near = clearLeft < LEFT_GAP + 0.05 || clearEnd < 0.35;
           if (near && still) { go('toReverse'); break; }
-          return { step, title: 'მიუახლოვდით მარცხენა ჯოხებს', text: 'საჭე ბოლომდე მარცხნივ, ნელა იმოძრავეთ წინ. გაჩერდით მარცხენა ჯოხებამდე დაახლოებით 0.5 მ-ში — მანქანა ოდნავ დიაგონალურად დადგება (≈75°).',
-            hint: still && r < 60 ? 'ჯერ ადრეა: ბოლო ხაზთან ნუ გაჩერდებით, განაგრძეთ მარცხენა ჯოხებამდე — თორემ უკუსვლისთვის ადგილი არ დარჩება.' : '',
+          return { step, title: 'მიუახლოვდით მარცხენა ჯოხებს', text: 'საჭე ბოლომდე მარცხნივ, ნელა იმოძრავეთ წინ. გაჩერდით მარცხენა ჯოხებამდე, მანქანა ოდნავ დიაგონალურად დადგება',
+            hint: still && r < 60 ? 'ჯერ ადრეა: ბოლო ხაზთან ნუ გაჩერდებით, განაგრძეთ მოძრაობა მარცხენა ჯოხებამდე, თორემ უკუსვლისთვის ადგილი არ დაგრჩებათ' : '',
             readout: `მარცხენა ხაზამდე ${clearLeft.toFixed(2)} მ · კუთხე ${r.toFixed(0)}°`, gear: 'D', steer: -1,
             speed: clamp(Math.min(clearLeft - LEFT_GAP, clearEnd - 0.35) * 0.8, 0.08, SLOW), stop: near, highlight: g.lines.slice(0, 3) };
         }
         case 'toReverse':
           if (veh.gear === 'R' && veh.steerWheel >= MAXS) { go('reverseArc'); break; }
-          return { step, title: 'უკუსვლა — საჭე ბოლომდე მარჯვნივ', text: 'მანქანა დგას: მოაბრუნეთ საჭე ბოლომდე მარჯვნივ და ჩართეთ R. უკუსვლა მხოლოდ ერთხელ შეიძლება.', gear: 'R', steer: 1, stop: true };
+          return { step, title: 'უკუსვლა, საჭე ბოლომდე მარჯვნივ', text: 'გაჩერებული მანქანით, მოაბრუნეთ საჭე ბოლომდე მარჯვნივ და ჩართეთ R. უკუსვლა მხოლოდ ერთხელ შეიძლება', gear: 'R', steer: 1, stop: true };
         case 'reverseArc': {
           const c = Math.min(clearRight, clearBack);
           const done = pole1Seen || c < 0.45;                // c: safety stop before the right / entrance side
           if (done && still) { go('toDrive'); break; }
-          return { step, title: 'უკუსვლა', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა მხარის პირველი ჯოხი (შესასვლელთან) წინა მინაში გამოჩნდება.',
-            readout: pole1Seen ? 'ჯოხი წინა მინაშია — გაჩერდით' : `ჯოხი მარცხენა დგარამდე ${Math.max(0, -toPillar).toFixed(0)}° · უკან დარჩა ${c.toFixed(2)} მ`, gear: 'R', steer: 1,
+          return { step, title: 'უკუსვლა', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა მხარის პირველი ჯოხი წინა მინაში გამოჩნდება',
+            readout: pole1Seen ? 'ჯოხი წინა მინაშია, გაჩერდით' : `ჯოხი მინის მარცხენა მხრიდან ${Math.max(0, -toPillar).toFixed(0)}° · უკან დარჩა ${c.toFixed(2)} მ`, gear: 'R', steer: 1,
             speed: clamp(-toPillar * 0.03, 0.08, 0.6), stop: done, focus: pole1L };
         }
         case 'toDrive':
           if (veh.gear === 'D' && veh.steerWheel <= -MAXS) { go('driveOut'); break; }
-          return { step, title: 'წინ — საჭე ბოლომდე მარცხნივ', text: 'ჩართეთ D (F) და მოაბრუნეთ საჭე ბოლომდე მარცხნივ (მანქანა დგას).', gear: 'D', steer: -1, stop: true };
+          return { step, title: 'პირდაპირ, საჭე ბოლომდე მარცხნივ', text: 'ჩართეთ D (F) და მოაბრუნეთ საჭე ბოლომდე მარცხნივ (მანქანა გაჩერებულია)', gear: 'D', steer: -1, stop: true };
         case 'driveOut':
           if (r > 160) { go('leave'); break; }
-          return { step, title: 'დაასრულეთ მობრუნება', text: 'იმოძრავეთ წინ, საჭე ბოლომდე მარცხნივ, სანამ მანქანა გასასვლელისკენ არ მიტრიალდება.',
+          return { step, title: 'დაასრულეთ მობრუნება', text: 'იმოძრავეთ წინ, საჭე ბოლომდე მარცხნივ, სანამ მანქანა გასასვლელისკენ არ მიტრიალდება',
             readout: `კუთხე ${r.toFixed(0)}°`, gear: 'D', steer: -1, speed: SLOW };
         case 'leave':
           if (ev.status !== 'active') { go('done'); break; }
-          return { step, title: 'გამოდით მარცხენა მხრიდან', text: 'გაასწორეთ საჭე და გამოდით ჩიხის მარცხენა ნახევრიდან.', gear: 'D',
+          return { step, title: 'გამოდით მარცხენა მხრიდან', text: 'გაასწორეთ საჭე და გამოდით ჩიხის მარცხენა მხრიდან', gear: 'D',
             track: { frame: { o: f.o, f: { x: -f.f.x, z: -f.f.z }, r: { x: -f.r.x, z: -f.r.z } }, b: -laneL }, speed: 1.2 };
         default: return null;
       }

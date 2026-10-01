@@ -136,7 +136,7 @@ export class Figure8Evaluator extends ElementEvaluator {
       if (inUnion(g, c)) {
         this.engage(g, time); this.phase = 'loops';
         const t = this.openingParam(g, c);
-        if (t === null || t > 0.5) this.penalize('wrongStart', t === null ? 'ღიობიდან არ შესულა' : 'შევიდა მარცხენა ნახევრიდან');
+        if (t === null || t > 0.5) this.penalize('wrongStart', t === null ? 'რვიანის დასაწყისიდან არ შესულა' : 'შევიდა მარცხენა ნახევრიდან');
       }
       return;
     }
@@ -187,7 +187,7 @@ export class Figure8Evaluator extends ElementEvaluator {
       const done = this.progress.top > 200 * DEG && this.progress.bottom > 270 * DEG && this.segments.join('').startsWith('TBT');
       if (!done) this.penalize('wrongRoute', `გამოვიდა ორივე წრის დასრულებამდე (ზედა ${toDeg(this.progress.top).toFixed(0)}°, ქვედა ${toDeg(this.progress.bottom).toFixed(0)}°)`);
       else if (t === null) this.penalize('wrongRoute', 'გამოვიდა გარე ხაზის გადაკვეთით');
-      else if (t < 0.5) this.penalize('wrongExit', 'გამოვიდა ღიობის მარჯვენა (დასავლეთის) ნახევრიდან');
+      else if (t < 0.5) this.penalize('wrongExit', 'გამოვიდა რვიანის მარჯვენა ნახევრიდან');
       if (this.status === 'active') this.complete();
     }
     this.info = { top: toDeg(this.progress.top).toFixed(0), bottom: toDeg(this.progress.bottom).toFixed(0), seq: this.segments.join('') };
@@ -265,14 +265,14 @@ export function createCoach(env) {
     update(veh, ev) {
       const info = ev.info || {};
       if (ev.status === 'waiting') {
-        return { step: 'approach', title: 'რვიანი: მიახლოება', text: 'შედით ღიობის მარჯვენა (დასავლეთის) ნახევრიდან, ზედა წრეში. ღიობის ბოლო ჯოხს ნუ მიუახლოვდებით.',
+        return { step: 'approach', title: 'რვიანი: ვუახლოვდებით', text: 'შედით რვიანზე მარჯვენა ნახევრიდან, ბოლო ჯოხს ნუ მიუახლოვდებით',
           gear: 'D', path, speed: 1.6, showPath: true };
       }
       const t = +info.top || 0, b = +info.bottom || 0;
-      let hint = 'ზედა წრე — საათის ისრის საწინააღმდეგოდ, საჭე მარცხნივ. მანქანის ცხვირი გარე ჯოხების გასწვრივ (~0.5 მ-ით შიგნით); შიდა წრეს ნუ მიეკვრით — უკანა საბურავი ჯოხებს მოედება.';
-      if (info.seq === 'TB') hint = 'ქვედა წრე — საათის ისრის მიმართულებით, საჭე მარჯვნივ. ცხვირი გარე ჯოხების გასწვრივ; შიდა ჯოხებს მარჯვენა სარკე ნუ მიუახლოვდება.';
-      if (info.seq?.startsWith('TBT')) hint = 'დაასრულეთ ზედა წრე და გამოდით ღიობის მარცხენა (აღმოსავლეთის) ნახევრიდან — ღიობის ბოლო ჯოხს ნუ მიუახლოვდებით.';
-      return { step: 'loops', title: 'რვიანი', text: 'იმოძრავეთ ნელა და თანაბრად, ზოლის შუაში. არ გაჩერდეთ და არ ჩართოთ უკუსვლა.', hint,
+      let hint = 'შიდა წრეს არ მიჰყვეთ, ეცადეთ გარე ჯოხებს უყუროთ და რაც შეიძლება ახლოს მიხვიდეთ მათთან, შემდეგ კი საჭე საპირისპირო მიმართულებით აბრუნოთ';
+      if (info.seq === 'TB') hint = 'საჭე მარჯვნივ. ცხვირი გარე ჯოხების გასწვრივ';
+      if (info.seq?.startsWith('TBT')) hint = 'დაასრულეთ რვიანი, გამოდით მარცხენა ნახევრიდან, ბოლო ჯოხს ნუ მიუახლოვდებით';
+      return { step: 'loops', title: 'რვიანი', text: 'ნელა იმოძრავეთ შუა ზოლში, არ გაჩერდეთ და არ ჩართოთ უკუსვლა', hint,
         readout: `ზედა ${t}°  ქვედა ${b}°`, gear: 'D', path, speed: 1.15, showPath: true, lookahead: 0.7 };
     },
   };

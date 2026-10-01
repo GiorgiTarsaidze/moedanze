@@ -33,17 +33,17 @@ export class Assistant {
     if (ex.state === 'finished') return { title: 'გამოცდა დასრულდა', text: 'იხილეთ შედეგების ფურცელი.', stop: true };
     // leaving the start position
     if (!ex.movedOff) {
-      return { title: 'სტარტი', text: 'ფეხი მუხრუჭზე: ჩართეთ D (F), მოხსენით სადგომი მუხრუჭი (Space) და დაიძარით.',
+      return { title: 'სტარტი', text: 'ფეხი მუხრუჭზე; ჩართეთ D (F ღილაკით), მოხსენით სადგომი მუხრუჭი (Space ღილაკი) და დაიძარით',
         stop: true, gear: 'D', handbrake: false, ready: V.gear === 'D' && !V.parkingBrake,
         path: this.legPath(this.course.legFor[ex.sequence[0]]), readyAction: { path: this.legPath(this.course.legFor[ex.sequence[0]]), speed: 2.0, gear: 'D' } };
     }
     if (this.parked) {
       if (V.gear === 'D' && !V.parkingBrake) this.parked = false;
-      else return { title: 'დაძვრა', text: 'ფეხი მუხრუჭზე: ჩართეთ D (F) და მოხსენით სადგომი მუხრუჭი (Space).', stop: true, gear: 'D', handbrake: false };
+      else return { title: 'დაძვრა', text: 'ფეხი მუხრუჭზე; ჩართეთ D (F ღილაკზე) და მოხსენით სადგომი მუხრუჭი (Space ღილაკზე)', stop: true, gear: 'D', handbrake: false };
     }
     if (ex.state === 'finishing') {
       const d = dist(V.center(), this.course.route.finish.p);
-      return { title: 'ფინიში', text: 'ყველა ელემენტი შესრულებულია. მიდით ფინიშამდე მარცხენა გზაზე და გაჩერდით.', readout: `${d.toFixed(0)} მ`,
+      return { title: 'ფინიში', text: 'ყველა ელემენტი შესრულებულია. მიდით მარშრუტის დასასრულამდე', readout: `${d.toFixed(0)} მ`,
         path: this.legPath('toFinish'), speed: 2.2, gear: 'D', showRoute: true };
     }
     const id = ex.currentId;
@@ -61,7 +61,7 @@ export class Assistant {
       }
     }
     const g = this.coaches[id].update(V, ev, time);
-    if (!g) return { title: name, text: 'გააგრძელეთ.', path: leg, speed: 1.5, gear: 'D' };
+    if (!g) return { title: name, text: 'გააგრძელეთ', path: leg, speed: 1.5, gear: 'D' };
     if (g.sticker) g.stickerResolved = this.resolveSticker(g.sticker);
     return g;
   }

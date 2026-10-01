@@ -139,7 +139,7 @@ export class Exam {
       if (ev.status === 'active') {
         ev.elapsed = this.time - ev.startTime;
         if (ev.elapsed > this.rules.elementTimeLimitSec) {
-          this.penalize(ev.id, 'overtime', { en: `Time limit (${this.rules.elementTimeLimitSec} s) exceeded`, ka: `გადაჭარბდა ელემენტის დროის ლიმიტს (${this.rules.elementTimeLimitSec} წმ)`, points: this.rules.overtimeResult, official: true }, '');
+          this.penalize(ev.id, 'overtime', { en: `Time limit (${this.rules.elementTimeLimitSec} s) exceeded`, ka: `გადაჭარბებულია ელემენტის შესასრულებელი დროის ლიმიტი (${this.rules.elementTimeLimitSec} წმ)`, points: this.rules.overtimeResult, official: true }, '');
           ev.fail('overtime');
         }
       } else if (ev.status === 'waiting' && (ev.skipped(V) || this.atNextElement(c))) {
