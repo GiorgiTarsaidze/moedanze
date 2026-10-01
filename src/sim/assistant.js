@@ -65,12 +65,11 @@ export class Assistant {
   }
 
   resolveSticker(s) {
-    // `reverse`: mirror view the sticker is for (right mirror dips in R); default = in reverse
-    const reverse = s.reverse ?? true, key = s.id + reverse + JSON.stringify(s.pose);
+    const key = s.id + JSON.stringify(s.pose);
     let r = this.stickerCache.get(key);
     if (!r) {
       const target = { x: s.target.x, y: 0.55, z: s.target.z };
-      r = { id: s.id, ...locateTarget(s.pose, target, { views: s.views, reverse }), target };
+      r = { id: s.id, ...locateTarget(s.pose, target, { views: s.views }), target };
       this.stickerCache.set(key, r);
     }
     // live position of the target in the same view (for the alignment indicator)
@@ -80,7 +79,7 @@ export class Assistant {
     let live;
     if (r.view === 'eye') { const b = eyeBearing(pl); live = { yaw: b.yaw, pitch: b.pitch, visible: true }; }
     else {
-      const pr = projectLocal(mirrorCamera(r.view, { reverse: V.gear === 'R' }), pl);
+      const pr = projectLocal(mirrorCamera(r.view), pl);
       live = { u: 1 - pr.u, v: pr.v, visible: pr.inside };
     }
     const aligned = r.view === 'eye' ? Math.abs(live.yaw - r.yaw) < 0.03 : live.visible && Math.abs(live.u - r.u) < 0.04;

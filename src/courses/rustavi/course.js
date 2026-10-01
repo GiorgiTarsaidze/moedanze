@@ -27,6 +27,9 @@ export const COURSE_DIMS = {
   PARALLEL_SPACE_WIDTH: 2.8,     // (instructor: "Rustavi's dimensions… 280 wide"; the map reads 3.0–3.2 m)
   PARALLEL_FRONT_ZONE: 6.0,      // (map) solid-edged zone between the space and the stop line (6.0–6.3 m)
   PARALLEL_STOPLINE_LENGTH: 6.7, // (map) comb stop line length from the kerb
+  PARALLEL_KERB_POLE_INSET: 1.75, // kerb-side poles: front and rear ones this far inside the bay ends, one in the middle.
+                                  // (instructor method: the inner front pole is in the middle of the right rear window
+                                  //  exactly where the full-lock turn must start)
 
   GARAGE_WIDTH: 3.0,             // (map) pockets measure 2.5–3.5 m; normalised
   GARAGE_LENGTH: 5.9,            // (map) 5.9–6.1 m

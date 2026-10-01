@@ -198,7 +198,7 @@ function frame(now) {
   // head / mouse look
   const look = input.takeLook();
   if (app.ext) {          // outside view: the mouse turns the camera around the car instead of the driver's head
-    orbit.yaw -= look.dx * 0.0022 * settings.sens;
+    orbit.yaw += look.dx * 0.0022 * settings.sens;
     orbit.pitch = THREE.MathUtils.clamp(orbit.pitch + look.dy * 0.0022 * settings.sens, 0.08, 1.35);
     look.dx = look.dy = 0;
   }
@@ -244,7 +244,7 @@ function frame(now) {
     cam = extCam;
   }
   if (window.__sim?.viewCam) cam = window.__sim.viewCam;
-  if (cam === camera || window.__sim?.viewCam) mirrors.render(scene, V);
+  if (cam === camera || window.__sim?.viewCam) mirrors.render(scene);
   renderer.render(scene, cam);
 
   // DOM updates at ~12 Hz

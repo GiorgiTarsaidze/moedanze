@@ -14,18 +14,16 @@ function cross3(p, q) { // in (a, y, b) handedness matching world (x, y, z) with
 function dot3(p, q) { return p.a * q.a + p.y * q.y + p.b * q.b; }
 
 // Mirror "camera" in car-local space: position, viewing direction, fov, aspect.
-export function mirrorCamera(which, opts = {}, P = VEHICLE) {
+export function mirrorCamera(which, P = VEHICLE) {
   const m = P.MIRRORS[which];
   if (which === 'rear') {
     // interior mirror: virtual camera placed at the rear window looking straight back
     return { pos: { a: -0.35, y: 1.28, b: 0 }, dir: normalize3({ a: -1, y: -0.06, b: 0 }), fov: m.fov, aspect: m.w / m.h };
   }
   const side = which === 'left' ? -1 : 1;
-  const r = opts.reverse ? m.reverse : null;        // own view while reversing (left mirror)
-  const pitch = (r ? r.pitch : m.pitch + (opts.reverse && m.reverseDipDeg ? m.reverseDipDeg : 0)) * DEG;
-  const yaw = (r ? r.yaw : m.yaw) * DEG;
+  const pitch = m.pitch * DEG, yaw = m.yaw * DEG;
   const dir = normalize3({ a: -Math.cos(yaw) * Math.cos(pitch), y: -Math.sin(pitch), b: side * Math.sin(yaw) * Math.cos(pitch) });
-  const fov = r ? r.fov : m.fov, aspect = r ? Math.tan(r.hfov * DEG / 2) / Math.tan(r.fov * DEG / 2) : m.w / m.h;
+  const fov = m.fov, aspect = m.hfov ? Math.tan(m.hfov * DEG / 2) / Math.tan(m.fov * DEG / 2) : m.w / m.h;
   // eye point near the outer part of the glass (inside the housing): sees past the flank into the rear wheel arch
   return { pos: { a: m.x - 0.01, y: m.y, b: side * (P.MIRROR_WIDTH / 2 - 0.02) }, dir, fov, aspect };
 }
@@ -77,7 +75,7 @@ export function locateTarget(pose, target, opts = {}, P = VEHICLE) {
   const order = opts.views || ['right', 'left'];
   for (const w of order) {
     if (!['left', 'right', 'rear'].includes(w)) continue;
-    const cam = mirrorCamera(w, opts, P);
+    const cam = mirrorCamera(w, P);
     const pr = projectLocal(cam, pl);
     // shrink the usable area slightly so the sticker is not on the very edge
     if (pr.inFront && pr.u > 0.04 && pr.u < 0.96 && pr.v > 0.05 && pr.v < 0.95) {

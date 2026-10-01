@@ -11,14 +11,13 @@ export class Mirrors {
     this.carGroup = carGroup;
     this.setQuality(quality);
     for (const w of ['left', 'right', 'rear']) {
-      const def = mirrorCamera(w, {}, P);
+      const def = mirrorCamera(w, P);
       const cam = new THREE.PerspectiveCamera(def.fov, def.aspect, 0.1, 450);
       cam.layers.set(LAYER.WORLD); cam.layers.enable(LAYER.EXTERIOR);
       carGroup.add(cam);
       this.cams[w] = cam;
-      this.pose(w, false);
+      this.pose(w);
     }
-    this.reverse = false;
   }
 
   setQuality(q) {
@@ -31,20 +30,18 @@ export class Mirrors {
     }
   }
 
-  pose(w, reverse) {
-    const def = mirrorCamera(w, { reverse }, this.P);
+  pose(w) {
+    const def = mirrorCamera(w, this.P);
     const cam = this.cams[w];
     const pos = new THREE.Vector3(def.pos.a, def.pos.y, def.pos.b);
     const dir = new THREE.Vector3(def.dir.a, def.dir.y, def.dir.b);
     const m = new THREE.Matrix4().lookAt(pos, pos.clone().add(dir), new THREE.Vector3(0, 1, 0));
     cam.position.copy(pos);
     cam.quaternion.setFromRotationMatrix(m);
-    if (cam.fov !== def.fov || cam.aspect !== def.aspect) { cam.fov = def.fov; cam.aspect = def.aspect; cam.updateProjectionMatrix(); }
+    cam.fov = def.fov; cam.aspect = def.aspect; cam.updateProjectionMatrix();
   }
 
-  render(scene, vehicle) {
-    const rev = vehicle.gear === 'R';
-    if (rev !== this.reverse) { this.reverse = rev; this.pose('right', rev); this.pose('left', rev); }
+  render(scene) {
     const r = this.renderer;
     const prev = r.getRenderTarget();
     for (const w of ['left', 'right', 'rear']) {

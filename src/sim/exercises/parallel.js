@@ -28,15 +28,15 @@ export function buildStation(st, dims) {
       { name: 'წინა ზონის ხაზი', a: toWorld(frame, a1, -W), b: toWorld(frame, 0, -W) },
       { name: 'სდექ-ხაზი', a: toWorld(frame, 0, 0), b: toWorld(frame, 0, -STOP), width: 0.3 },
     ],
-    // poles just outside the lines: 2 on the road side (bay corners), 3 on the kerb side (corners + middle),
-    // 1 behind the rear line. Seen in the left mirror while reversing at full right lock they appear in the
-    // order road-rear, rear-edge, kerb-rear: the kerb-rear one is "the 3rd pole".
+    // poles just outside the lines: 2 on the road side (bay corners), 3 evenly along the kerb side, 1 behind
+    // the rear line. Seen in the left mirror while reversing at full right lock from the inner-pole turning point
+    // they appear in the order road-rear, rear-edge, kerb-rear: the kerb-rear one is "the 3rd pole" (~45°).
     posts: [
       { p: toWorld(frame, a0 - 0.18, -W - 0.18), name: 'უკანა ჯოხი', role: 'roadRear' },
       { p: toWorld(frame, a1 + 0.18, -W - 0.18), name: 'წინა ჯოხი', role: 'roadFront' },
-      { p: toWorld(frame, a1 + 0.18, 0.18), name: 'ბორდიურის წინა ჯოხი', role: 'kerbFront' },
+      { p: toWorld(frame, a1 - dims.PARALLEL_KERB_POLE_INSET, 0.18), name: 'ბორდიურის წინა ჯოხი', role: 'kerbFront' },
       { p: toWorld(frame, (a0 + a1) / 2, 0.18), name: 'ბორდიურის შუა ჯოხი', role: 'kerbMid' },
-      { p: toWorld(frame, a0 - 0.18, 0.18), name: 'ბორდიურის უკანა ჯოხი', role: 'kerbRear' },
+      { p: toWorld(frame, a0 + dims.PARALLEL_KERB_POLE_INSET, 0.18), name: 'ბორდიურის უკანა ჯოხი', role: 'kerbRear' },
       { p: toWorld(frame, a0 - 0.18, -W / 2), name: 'უკანა კიდის ჯოხი', role: 'rearEdge' },
     ],
     markings: [
@@ -146,12 +146,11 @@ export class ParallelEvaluator extends ElementEvaluator {
 
 // ------------------------------------------------------------------------------------------
 // Coach — the driving-school method with the bay's poles as references:
-//  1. drive past the bay and stop when the road-side front pole is in the middle of the right rear
-//     side window (yellow dot = where it must be for this lane);
-//  2. full right lock, reverse until the kerb side's 3rd (rear) pole appears in the left mirror (~45°);
+//  1. drive past the bay and stop when the inner (kerb-side) front pole is in the middle of the right
+//     rear side window (yellow dot = where it must be for this lane);
+//  2. full right lock, reverse until the 3rd pole (kerb-side rear) appears in the left mirror (~45°);
 //  3. straighten, reverse until the left rear wheel reaches the bay line;
 //  4. full left lock, reverse until the car is parallel; parking brake once it fits.
-// The turning point is the classic plan (two full-lock arcs joined at 45°) computed from the car.
 // ------------------------------------------------------------------------------------------
 export function createCoach(env) {
   const { vehicle: V } = env;
@@ -159,19 +158,15 @@ export function createCoach(env) {
   const MAXS = V.D.MAX_STEERING_WHEEL_ANGLE * 0.98;
   const gap = 0.75;                                  // lateral gap to the line while approaching
   const laneB = (g) => -g.W - gap - P.CAR_WIDTH / 2;
-  const rearGapTarget = 0.75;                        // planned distance rear bumper -> rear line
-  const finalRA = (g) => g.a0 + rearGapTarget + P.REAR_OVERHANG;
-  const finalB = (g) => -g.W / 2 + 0.05;
-  const theta = 45 * DEG;
-  const DOT = 36 * DEG;                              // turn at which the 3rd pole is well inside the left mirror (reverse view)
+  const DOT = 42 * DEG;                              // turn at which the 3rd pole is fully inside the left mirror
   const MARGIN = 0.12;                               // "fits": whole body this far inside the lines
   let step = 'approach', t0 = 0, g = null;
 
-  // rear axle `a` where the full right lock must start, for a car with its rear axle at lateral b
+  // rear axle `a` at which the inner (kerb-side) front pole is seen in the middle of the right rear side
+  // window, for a car with its rear axle at lateral b
   function turnA(b) {
-    const delta = finalB(g) - b;
-    const S = Math.max(0, (delta - 2 * R * (1 - Math.cos(theta))) / Math.sin(theta));
-    return finalRA(g) + 2 * R * Math.sin(theta) + S * Math.cos(theta);
+    const p = toLocal(g.frame, post('kerbFront')), E = P.EYE, w = P.RIGHT_REAR_WINDOW_DEG;
+    return p.a - E.x - (p.b - b - E.z) / Math.tan((w.front + w.rear) / 2 * DEG);
   }
   const post = (role) => g.posts.find((p) => p.role === role).p;
 
@@ -189,10 +184,10 @@ export function createCoach(env) {
       const r = -rel / DEG;                            // degrees turned towards the kerb
       const still = Math.abs(veh.v) < 0.03;
       const go = (s) => { step = s; t0 = time; };
-      const roadFront = post('roadFront'), kerbRear = post('kerbRear');
+      const kerbFront = post('kerbFront'), pole3 = post('kerbRear');  // 3rd pole to appear in the left mirror
       const laneNow = Math.round(ra.b * 20) / 20;     // the lane the car is in (for the reference dot)
       const tA = turnA(laneNow), d = ra.a - tA;        // d > 0: past the turning point
-      const turnDot = { id: 'par-turn', target: roadFront, pose: poseAt(g, tA, laneNow, 0), views: [] };
+      const turnDot = { id: 'par-turn', target: kerbFront, pose: poseAt(g, tA, laneNow, 0), views: [] };
       const lw = toLocal(f, veh.wheels()[2]);          // left rear wheel
       const outline = bodyOutline(veh).map((p) => toLocal(f, p));
       const rearOut = g.a0 + MARGIN - Math.min(...outline.map((l) => l.a));   // > 0: rear over the rear line
@@ -203,31 +198,31 @@ export function createCoach(env) {
         case 'approach': {
           if (d > -0.15 && still) { go(d > 0.35 ? 'backUp' : 'toReverse'); break; }
           return { step, title: 'მიუახლოვდით პარკირების ადგილს',
-            text: 'გაიარეთ ადგილის გასწვრივ, ხაზიდან დაახლოებით 0.7–1 მ-ში. გაჩერდით, როცა ადგილის წინა ჯოხი (გზის მხარეს) მარჯვენა უკანა ფანჯრის შუაში გამოჩნდება — ყვითელ წერტილთან.',
+            text: 'გაიარეთ ადგილის გასწვრივ, ხაზიდან დაახლოებით 0.7–1 მ-ში. გაჩერდით, როცა ადგილის შიდა (ბორდიურის მხარის) წინა ჯოხი მარჯვენა უკანა ფანჯრის შუაში გამოჩნდება — ყვითელ წერტილთან.',
             readout: `მობრუნების წერტილამდე ${Math.max(0, -d).toFixed(1)} მ`, gear: 'D',
             track: { frame: f, b: laneB(g) }, speed: clamp(-d * 0.9, 0, 2.2), stop: d > -0.15,
             ghost: ghost(g, tA, laneB(g)),                 // ghost car = rear axle at the turning point
-            sticker: turnDot, focus: roadFront };
+            sticker: turnDot, focus: kerbFront };
         }
         case 'backUp':
           if (d <= 0.15 && still) { go('lockRight'); break; }
-          return { step, title: 'გადასცდით მობრუნების წერტილს', text: 'ჩართეთ R და საჭე სწორად ნელა იმოძრავეთ უკან, სანამ წინა ჯოხი მარჯვენა უკანა ფანჯრის შუაში (ყვითელ წერტილთან) არ მოვა.',
+          return { step, title: 'გადასცდით მობრუნების წერტილს', text: 'ჩართეთ R და საჭე სწორად ნელა იმოძრავეთ უკან, სანამ შიდა წინა ჯოხი მარჯვენა უკანა ფანჯრის შუაში (ყვითელ წერტილთან) არ მოვა.',
             readout: `${Math.max(0, d).toFixed(2)} მ`, gear: 'R', steer: 0, speed: clamp(d * 0.8, 0.12, 0.8), stop: d <= 0.15,
-            sticker: turnDot, focus: roadFront };
+            sticker: turnDot, focus: kerbFront };
         case 'toReverse':
           if (veh.gear === 'R') { go('lockRight'); break; }
-          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R.', gear: 'R', stop: true, sticker: turnDot, focus: roadFront };
+          return { step, title: 'ჩართეთ უკუსვლა', text: 'დააჭირეთ მუხრუჭს და ჩართეთ R.', gear: 'R', stop: true, sticker: turnDot, focus: kerbFront };
         case 'lockRight':
           if (veh.steerWheel >= MAXS) { go('arcRight'); break; }
           return { step, title: 'საჭე ბოლომდე მარჯვნივ', text: 'მოაბრუნეთ საჭე ბოლომდე მარჯვნივ (მანქანა დგას).', gear: 'R', steer: 1, stop: true };
         case 'arcRight': {
-          const pr = projectLocal(mirrorCamera('left', { reverse: true }), { ...worldToLocal({ x: veh.x, z: veh.z, heading: veh.heading }, kerbRear), y: 0.6 });
-          const seen = pr.inside && 1 - pr.u < 0.93;     // clearly inside the left mirror, not on its edge
-          const done = seen || r >= 48;
+          const pr = projectLocal(mirrorCamera('left'), { ...worldToLocal({ x: veh.x, z: veh.z, heading: veh.heading }, pole3), y: 0.6 });
+          const seen = pr.inside && 1 - pr.u < 0.96;     // fully inside the left mirror, not on its edge
+          const done = seen || r >= 52;
           if (done && still) { go('center1'); break; }
-          return { step, title: 'შედით ადგილზე', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა სარკეში ბორდიურის მხარის მესამე (უკანა) ჯოხი გამოჩნდება.',
+          return { step, title: 'შედით ადგილზე', text: 'ნელა იმოძრავეთ უკუსვლით, საჭე ბოლომდე მარჯვნივ. გაჩერდით, როცა მარცხენა სარკეში მესამე ჯოხი (ბორდიურის მხარის უკანა ჯოხი) გამოჩნდება.',
             readout: seen ? 'ჯოხი სარკეშია — გაჩერდით' : `კუთხე ${r.toFixed(0)}°`, gear: 'R', steer: 1, speed: clamp((45 - r) * 0.06, 0.12, 0.7), stop: done,
-            sticker: { id: 'par-3rd', target: kerbRear, pose: poseAt(g, tA - R * Math.sin(DOT), laneNow + R * (1 - Math.cos(DOT)), -DOT), views: ['left'] }, focus: kerbRear };
+            sticker: { id: 'par-3rd', target: pole3, pose: poseAt(g, tA - R * Math.sin(DOT), laneNow + R * (1 - Math.cos(DOT)), -DOT), views: ['left'] }, focus: pole3 };
         }
         case 'center1':
           // ±25° of steering wheel: a keyboard tap moves it 20–40°; left uncorrected the car still parks cleanly

@@ -68,18 +68,21 @@ export const VEHICLE = {
   // Windscreen seen from EYE: yaw (deg, + right) of the A-pillars' inner edges at dashboard height
   // (A-pillar bases in car3d.js at x 2.08, z ±0.80). A pole between them is "in the front window".
   WINDSCREEN_EDGE_DEG: { left: -25, right: 51 },
+  // Right rear side window seen from EYE at eye height: yaw (deg) of its visible front (B-pillar) and rear
+  // (C-pillar) edges, from the glass and pillar beams in car3d.js.
+  RIGHT_REAR_WINDOW_DEG: { front: 106, rear: 134 },
 
-  // Mirror positions (car-local) & aim (yaw deg outward from straight back, pitch deg down).
+  // Mirror positions (car-local) & aim (yaw deg outward from straight back, pitch deg down). The view does not
+  // change between D and R. hfov (optional): horizontal field; the image is then squeezed like a convex mirror.
   // x/y keep the whole glass visible from EYE through the side window: behind the A-pillar base
   // and above the dashboard / door sill (at x 2.02, y 1.02 the pillar and dash hid most of it).
   MIRRORS: {
-    left:  { x: 1.75, y: 1.06, z: -1.00, yaw: 17, pitch: 4, fov: 24, w: 0.21, h: 0.13,
-             // In R: same outer edge (poles far behind enter the mirror as before), but it reaches further in and
-             // down (slightly squeezed, like a convex mirror) so the rear left tyre on the line is visible.
-             reverse: { yaw: 13.5, pitch: 16.5, fov: 35, hfov: 45 } },
-    right: { x: 1.75, y: 1.06, z:  1.00, yaw: 19, pitch: 6, fov: 26, w: 0.21, h: 0.13,
-             reverseDipDeg: 6 },  // right mirror tilts down in R (common kerb-view feature)
-    rear:  { x: 1.78, y: 1.33, z: -0.06, w: 0.24, h: 0.07, fov: 16 },
+    // left: aimed down and reaching in far enough to show the rear left tyre on the ground; its inner edge also
+    // sets when the parallel-parking poles come into view (the 3rd one at ~40° of the full-lock turn)
+    left:  { x: 1.75, y: 1.06, z: -1.00, yaw: 11, pitch: 16.5, fov: 35, hfov: 49, w: 0.21, h: 0.13 },
+    right: { x: 1.75, y: 1.06, z:  1.00, yaw: 19, pitch: 6, fov: 26, w: 0.21, h: 0.13 },
+    // interior mirror: just behind the windscreen (the glass is at x 1.62 at this height)
+    rear:  { x: 1.58, y: 1.28, z: -0.06, w: 0.16, h: 0.05, fov: 16 },
   },
 };
 

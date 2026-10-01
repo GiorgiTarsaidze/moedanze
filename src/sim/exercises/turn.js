@@ -118,7 +118,7 @@ export class TurnEvaluator extends ElementEvaluator {
 //    middle of the right half to 0.4 m from the right poles;
 //  - stop ~0.5 m before the LEFT poles: the car stands slightly diagonal (~70–83°). Stopping early
 //    at the far line (~45°) leaves no room for the reverse;
-//  - full right, R, reverse to ~120° (100–140° all work); D, full left, out through the left half.
+//  - full right, R, reverse until the left side's first pole appears in the windscreen (~102°); D, full left, out.
 // ------------------------------------------------------------------------------------------
 export function createCoach(env) {
   const { vehicle: V, dims } = env;
