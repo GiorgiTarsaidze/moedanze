@@ -6,8 +6,7 @@ import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
-let esbuild;
-try { esbuild = require('esbuild'); } catch { esbuild = require('/home/claude/.npm-global/lib/node_modules/tsx/node_modules/esbuild'); }
+const esbuild = require('esbuild');
 const root = join(fileURLToPath(import.meta.url), '../..');
 const res = await esbuild.build({
   entryPoints: [join(root, 'src/main.js')], bundle: true, format: 'esm', minify: true, write: false, target: 'es2020',

@@ -5,8 +5,7 @@
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 const require = createRequire(import.meta.url);
-let pw;
-try { pw = require('playwright'); } catch { pw = require('/home/claude/.npm-global/lib/node_modules/playwright'); }
+const pw = require('playwright');
 
 const out = process.argv[2] || 'tests/screenshots';
 mkdirSync(out, { recursive: true });

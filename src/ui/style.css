@@ -41,6 +41,9 @@ button.primary:hover { background: var(--sign-2); }
 #menu .card { background: rgba(22, 25, 27, 0.9); backdrop-filter: blur(8px); gap: 10px; padding: 20px 24px; }
 #menu .brand { align-items: center; justify-content: space-between; padding-bottom: 12px; }
 #menu .brand h1 { font-size: clamp(30px, 4.4vw, 46px); }
+#menu .brand-actions { display: flex; align-items: center; gap: 14px; }
+#menu .gh { color: var(--muted); display: flex; padding: 6px; border-radius: 8px; }
+#menu .gh:hover { color: var(--paint); background: var(--line); }
 #menu h3 { margin: 4px 0 8px; }
 #menu .small { margin: 8px 0 0; }
 .menu-grid { display: grid; grid-template-columns: 1.45fr 1fr 0.95fr; gap: 6px 26px; }
@@ -135,6 +138,7 @@ ol.route li { padding: 2px 0; }
 
 @media (max-width: 900px) {
   .menu-grid { grid-template-columns: 1fr; }
+  #menu .brand { flex-wrap: wrap; }
   #guide { left: 12px; right: 12px; transform: none; width: auto; min-width: 0; top: auto; bottom: 64px; }
   #toasts { top: 120px; }
 }
