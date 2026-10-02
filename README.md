@@ -1,5 +1,11 @@
 # moedanze
 
+<h3 align="center"><a href="https://moedanze.ge/">moedanze.ge</a></h3>
+
+<p align="center">
+  <a href="https://moedanze.ge/"><img src="docs/screenshot-zigzag.jpg" alt="Driving the zigzag in training mode" width="900"></a>
+</p>
+
 A 3D driving simulator of the Georgian B-category practical driving exam ground (მოედანი).
 You sit in the driver's seat of an automatic car and drive the Rustavi exam ground with all six
 exam elements, just like on the real exam.

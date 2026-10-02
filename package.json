@@ -1,6 +1,6 @@
 {
   "name": "rustavi-driving-exam-sim",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "First-person 3D simulator of the Rustavi (Georgia) B-category Stage 1 practical driving examination ground",
   "type": "module",
   "private": true,
