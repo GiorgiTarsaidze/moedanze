@@ -35,19 +35,40 @@ export class PathTracker {
     return best;
   }
   remaining() { return this.s[this.s.length - 1] - this.s[this.idx]; }
-  // curvature command for the rear axle (forward motion)
+  // curvature command for the rear axle (forward motion). Errors and curvature are interpolated along
+  // the segment the car is on, so the command (and the wheel) moves smoothly instead of stepping at
+  // every path point.
   command(veh, ahead = 1.0) {
     const p = { x: veh.x, z: veh.z };
     const i = this.nearest(p);
-    const q = this.pts[i];
-    const d = fromAngle(this.th[i]);
-    const e = clamp(dot(sub(p, q), rightOf(d)), -1.2, 1.2);  // + = rear axle right of path
-    const eh = wrapAngle(veh.heading - this.th[i]);
+    let j = Math.min(i, this.pts.length - 2), u = this.along(j, p);
+    if (u < 0 && j > 0) { j--; u = this.along(j, p); }
+    u = clamp(u, 0, 1);
+    const a = this.pts[j], b = this.pts[j + 1];
+    const q = { x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u };
+    const th = this.th[j] + wrapAngle(this.th[j + 1] - this.th[j]) * u;
+    const s = this.s[j] + (this.s[j + 1] - this.s[j]) * u;
+    const e = clamp(dot(sub(p, q), rightOf(fromAngle(th))), -1.2, 1.2);  // + = rear axle right of path
+    const eh = wrapAngle(veh.heading - th);
     // feed-forward: mean path curvature over a window ahead (anticipates the steering-rate limit)
-    let j = i, sum = 0, n = 0;
-    while (j < this.pts.length - 1 && this.s[j] - this.s[i] < ahead + 1.2) { if (this.s[j] - this.s[i] >= ahead - 0.6) { sum += this.k[j]; n++; } j++; }
-    const kff = n ? sum / n : this.k[i];
+    let sum = 0;
+    for (let m = 0; m <= 18; m++) sum += this.kAt(s + ahead - 0.6 + m * 0.1, j);
+    const kff = sum / 19;
     return clamp(kff - 0.45 * e - 1.3 * Math.sin(eh), -1, 1);
+  }
+  // position of p along segment j..j+1 (0 = point j, 1 = point j+1)
+  along(j, p) {
+    const a = this.pts[j], b = this.pts[j + 1], dx = b.x - a.x, dz = b.z - a.z, L2 = dx * dx + dz * dz;
+    return L2 > 1e-12 ? ((p.x - a.x) * dx + (p.z - a.z) * dz) / L2 : 0;
+  }
+  // path curvature at arc length s, linear between points; the search starts at point j
+  kAt(s, j) {
+    const S = this.s, n = S.length;
+    if (s >= S[n - 1]) return this.k[n - 1];
+    while (j > 0 && S[j] > s) j--;
+    while (j < n - 2 && S[j + 1] < s) j++;
+    const L = S[j + 1] - S[j], u = L > 1e-9 ? clamp((s - S[j]) / L, 0, 1) : 0;
+    return this.k[j] + (this.k[j + 1] - this.k[j]) * u;
   }
 }
 

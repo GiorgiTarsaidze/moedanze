@@ -318,6 +318,21 @@ function runElement(id, { override, maxTime = 200, mode = 'training', lastStatio
   check('Figure eight clean run completes', r.status === 'completed' && r.rules.length === 0, r.rules.join(','));
 }
 {
+  // instructor (G) steering on a path must be smooth: the path follower used to step from point to
+  // point, so the wheel flapped back and forth ~7 times a second in the zigzag and the figure eight
+  const flipsPerSecond = (id) => {
+    let ext = 0, dir = 0, flips = 0;
+    const r = runElement(id, { override: ({ V }) => {
+      const w = V.steerWheel * 180 / Math.PI;      // a flip = the wheel turns back by more than 2°
+      if (Math.abs(w - ext) > 2) { const d = Math.sign(w - ext); if (dir && d !== dir) flips++; dir = d; ext = w; }
+      else if ((w - ext) * dir > 0) ext = w;
+    } });
+    return flips / r.sim.time;
+  };
+  const z = flipsPerSecond('zigzag'), f8 = flipsPerSecond('figure8');
+  check('Instructor steering is smooth on paths (wheel flips < 1/s in zigzag and figure eight)', z < 1 && f8 < 1, `zigzag ${z.toFixed(2)}/s, figure8 ${f8.toFixed(2)}/s`);
+}
+{
   // skip the bottom loop: once round the top loop, then out through the opening (posts block cutting across)
   let path = null;
   const r = runElement('figure8', { override: ({ sim, V }) => {

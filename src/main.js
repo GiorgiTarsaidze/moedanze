@@ -4,6 +4,7 @@ import { Simulation } from './sim/simulation.js';
 import { AutoDriver } from './sim/driver.js';
 import { courses, defaultCourse } from './courses/index.js';
 import { VEHICLE } from './config/vehicle.js';
+import { worldToLocal, eyeBearing } from './sim/optics.js';
 import { examRules } from './config/examRules.js';
 import { buildWorld3D } from './render/world3d.js';
 import { buildCar, LAYER } from './render/car3d.js';
@@ -166,7 +167,7 @@ function handleAction(a) {
   else if (a === 'hud') { app.hud = !app.hud; }
   else if (a === 'camera') app.ext = !app.ext;
   else if (a === 'minimap' && training) app.minimap = !app.minimap;
-  else if (a === 'demo' && training) { app.demo = !app.demo; ui.toast(app.demo ? '<b>მართავს ინსტრუქტორი</b><br>უყურეთ საჭეს, პედლებს და სარკეებს. მართვის კონტროლის დასაბრუნებლად დააჭირეთ G-ს' : 'ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 4000); }
+  else if (a === 'demo' && training) { app.demo = !app.demo; if (!app.demo) head.targetYaw = 0; ui.toast(app.demo ? '<b>მართავს ინსტრუქტორი</b><br>უყურეთ საჭეს, პედლებს და სარკეებს. მართვის კონტროლის დასაბრუნებლად დააჭირეთ G-ს' : 'ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 4000); }
 }
 
 // ------------------------------------------------------------------ loop
@@ -176,8 +177,25 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix(); extCam.updateProjectionMatrix(); menuCam.updateProjectionMatrix();
 });
 
-let last = performance.now(), t = 0, uiTimer = 0;
+let last = performance.now(), t = 0, uiTimer = 0, mouseT = -Infinity, lastGear = null, lastPB = null;
 const eye = VEHICLE.EYE;
+
+// G mode: where the instructor looks. At the mirror that holds the yellow reference dot; at the pole
+// that has to reach a window dot (the head follows it to the dot); while reversing at the pole to watch;
+// otherwise ahead.
+function instructorGaze(V) {
+  const g = sim.guidance, s = g?.stickerResolved;
+  if (s?.view === 'eye') return { yaw: s.live.yaw, pitch: s.live.pitch };
+  if (s) {
+    const m = VEHICLE.MIRRORS[s.view], dx = m.x - eye.x, dz = m.z - eye.z;
+    return { yaw: Math.atan2(dz, dx), pitch: Math.atan2(m.y - eye.y, Math.hypot(dx, dz)) };
+  }
+  if (g?.focus && V.gear === 'R') {   // no further back than the side window: the pole comes to the mirror there
+    const b = eyeBearing(worldToLocal({ x: V.x, z: V.z, heading: V.heading }, { ...g.focus, y: 0.55 }));
+    return { yaw: THREE.MathUtils.clamp(b.yaw, -1.6, 1.6), pitch: b.pitch };
+  }
+  return { yaw: 0, pitch: -0.12 };
+}
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt;
@@ -202,7 +220,12 @@ function frame(now) {
     orbit.pitch = THREE.MathUtils.clamp(orbit.pitch + look.dy * 0.0022 * settings.sens, 0.08, 1.35);
     look.dx = look.dy = 0;
   }
-  if (look.dx || look.dy) head.targetYaw = null;
+  if (look.dx || look.dy) { head.targetYaw = null; mouseT = t; }
+  if (app.demo && app.running && !app.paused && t - mouseT > 2) {   // the mouse takes over for 2 s
+    const gz = instructorGaze(V), k = Math.min(1, dt * 4);
+    head.yaw += (THREE.MathUtils.clamp(gz.yaw, -2.6, 2.6) - head.yaw) * k;
+    head.pitch += (THREE.MathUtils.clamp(gz.pitch, -0.6, 0.4) - head.pitch) * k;
+  }
   head.yaw = THREE.MathUtils.clamp(head.yaw + look.dx * 0.0022 * settings.sens, -2.6, 2.6);
   head.pitch = THREE.MathUtils.clamp(head.pitch - look.dy * 0.0022 * settings.sens, -1.05, 0.6);
   if (head.targetYaw !== null) { head.yaw += (head.targetYaw - head.yaw) * Math.min(1, dt * 10); head.pitch += (-0.12 - head.pitch) * Math.min(1, dt * 10); if (Math.abs(head.yaw) < 0.002) head.targetYaw = null; }
@@ -211,12 +234,14 @@ function frame(now) {
     let guidance = null;
     if (training || app.demo) guidance = sim.updateGuidance();
     const drivingKeys = input.keys.size > 0;
-    if (app.demo && drivingKeys) { app.demo = false; ui.toast('ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 2500); }
+    if (app.demo && drivingKeys) { app.demo = false; head.targetYaw = 0; ui.toast('ინსტრუქტორი გამოირთო, მართავთ თქვენ', 'info', 2500); }
     let vin;
     if (app.demo && guidance) { const a = guidance.ready ? guidance.readyAction : guidance; vin = demo.drive(a, 1 / 60); }
     else vin = input.vehicleInput(settings.selfCenter);
     sim.advance(dt, () => (app.demo && guidance ? demo.drive(guidance.ready ? guidance.readyAction : guidance, 1 / 120) : vin));
     if (V.contacts.some((c) => c.isNew)) audio.thump();
+    if (app.demo) { if (V.gear !== lastGear) audio.click(); if (V.parkingBrake !== lastPB) audio.ratchet(); }   // the instructor's own shifts
+    lastGear = V.gear; lastPB = V.parkingBrake;
     training3d(guidance, training);
   } else training3d(null, false);
 
